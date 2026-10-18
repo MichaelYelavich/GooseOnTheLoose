@@ -4,13 +4,13 @@ Release: Goose on the Loose 0.4.0-beta.1. Test host: Windows 11 build 26300, x64
 
 ## Regressions and native checks
 
-139 application checks pass, including all 110 pre-beta checks. New coverage includes delivery after live lists disappear, profile precedence, atomic note saving, external edits and deletion, locked notes, unchanged-editor close, watcher filtering and unavailable/recovered folders, legacy note totals/cancellation, background picture preparation and cache limits, rotating logs, diagnostics privacy, and secondary-instance startup/quit behavior.
+142 application checks pass, including all 110 pre-beta checks. New coverage includes delivery after live lists disappear, profile precedence, atomic note saving, external edits and deletion, locked notes, unchanged-editor close, watcher filtering and unavailable/recovered folders, legacy note totals/cancellation, background picture preparation and cache limits, rotating logs, diagnostics privacy, and secondary-instance startup/quit behavior.
 
 The delivery regression was run before the fix and reproduced a DivideByZeroException. Deliveries now snapshot their payload at task start rather than indexing live lists after leaving the desktop.
 
-14 native Windows checks pass. They cover click-through/no-activate styles, offscreen return, interactive toy controls, full-assortment rendering, PNG/GIF windows and disposal, real file/folder dialog cancellation after repeated Toy Box cycles, recoverable dialog errors, quit during a picker, and cancellation during import progress.
+17 native Windows checks pass. They cover click-through/no-activate styles, offscreen return, interactive toy controls, full-assortment rendering, PNG/GIF windows and disposal, real file/folder dialog cancellation after repeated Toy Box cycles, recoverable dialog errors, quit during a picker, and cancellation during import progress.
 
-The appearance sheet and native Toy Box rendering were visually inspected. Existing tests cover every shared appearance/size, Canada-goose proportions, swimming transitions, stationary footprint pixels across crop changes, exact five-second Escape timing/cancellation, simultaneous bursts, reduced motion, paused cleanup, and immediate quit. These controller/native checks do not claim physical mouse/keyboard testing of every route or driver-specific compositor behavior.
+The appearance sheet and native Toy Box rendering were visually inspected. Existing tests cover every shared appearance/size, Canada-goose proportions, swimming transitions, stationary footprint pixels across crop changes, exact five-second Escape timing/cancellation, simultaneous bursts, reduced motion, paused cleanup, and immediate quit. Native tests also exercise 240 buffer reallocations, the hidden empty toy layer, background image delivery, and cancellation without stale windows. These controller/native checks do not claim physical mouse/keyboard testing of every route or driver-specific compositor behavior.
 
 ## Performance
 
@@ -24,13 +24,13 @@ The same benchmark harness was compiled against the original 0.3.1 binary and th
 
 Full-load GDI/USER counts remain unchanged across each run. Gen-0 collections fall from six to two in the full-load comparison. Private memory grows from 38 to 44 MB for the baseline and 37 to 43 MB for the beta during this short run. Native buffers retain two extra GDI objects while active rather than recreating them every frame.
 
-The real 30-minute paced maximum-load soak is a release gate. Its final measured outcome will be recorded here before publication.
+The real 30-minute paced maximum-load soak passes: **43,948 frames over 1,800.0 seconds**, p50 **10.865 ms**, p95 **17.806 ms**, CPU total **527,906 ms**, GDI **34 → 34**, USER **25 → 24**, and private memory **37 → 44 MB** after a final collection. Periodic samples plateau around 43–46 MB after warmup. The run maintains two geese, 16 objects and 256 replenished footprints, and repeatedly opens/renders/closes picture windows. Gen-0 collections: 84. The final rendering code is unchanged from the soaked build; subsequent changes add tests, formatting and deterministic-build settings.
 
 ## Installer and packages
 
 18 installer checks pass against a rebuilt actual 0.3.1 baseline, using the same test AppId as the previous installer. They cover previous-directory reuse, running-app shutdown, updated legacy compatibility binary, renamed/optional shortcuts, preserved custom pictures/notes/settings, legacy/new single-instance behavior, fresh install, uninstall, and retained content. Test paths contain spaces and a simulated redirected Documents destination. The test removes its own shortcuts and installer registration.
 
-Extracted portable/source checks and GitHub-hosted Windows validation are required before publication; final results are recorded in the release commit.
+Six extracted-package checks pass: portable hash/version, seed/start/quit, byte-identical application/core rebuilds from archived source, all application regressions from the extracted source, and generated/private-file exclusions for both ZIPs. GitHub-hosted Windows validation remains a publication gate.
 
 ## Remaining verification limits
 
