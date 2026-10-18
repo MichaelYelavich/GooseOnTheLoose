@@ -1,0 +1,50 @@
+[
+  {
+    "name": "DesktopGoose-Plus",
+    "remote": "https://github.com/zhanghanboke/DesktopGoose-Plus.git",
+    "commit": "53b8f593c6120552b89a5892cb231973832f5fbd",
+    "date": "2026-09-28T02:30:17+08:00"
+  },
+  {
+    "name": "DesktopGoose-PyGoose",
+    "remote": "https://github.com/claudepc42/DesktopGoose-PyGoose.git",
+    "commit": "6ae5e77dc7a9f020749792bef75e0aa4fa157d56",
+    "date": "2026-07-16T12:51:30-04:00"
+  },
+  {
+    "name": "DesktopGooseDecompiled",
+    "remote": "https://github.com/elliotgsy/DesktopGooseDecompiled.git",
+    "commit": "0b01b89c5fdecce07f9156398861564d7500cc22",
+    "date": "2020-02-03T13:46:23Z"
+  },
+  {
+    "name": "DesktopGooseMod_Ball",
+    "remote": "https://github.com/TheOrlando/DesktopGooseMod_Ball.git",
+    "commit": "3f66dc8bc7f3eaf0e9ce8600e1dd4339b1c5ee47",
+    "date": "2020-02-25T14:41:51-05:00"
+  },
+  {
+    "name": "DesktopGooseMod_Toys",
+    "remote": "https://github.com/TheOrlando/DesktopGooseMod_Toys.git",
+    "commit": "ccf0335d7e8c19abeb6833507a51c22a8d57c8bb",
+    "date": "2020-03-06T18:29:43-05:00"
+  },
+  {
+    "name": "DesktopGooseModsSource",
+    "remote": "https://github.com/JonDoge42/DesktopGooseModsSource.git",
+    "commit": "ea85367727af52d4721531f1d9255c744719e62e",
+    "date": "2020-08-14T14:03:15-07:00"
+  },
+  {
+    "name": "goose",
+    "remote": "https://github.com/RealEmmettS/goose.git",
+    "commit": "eeefcfe1b9e09c21528fbea2b43dbec58a281455",
+    "date": "2026-09-09T19:01:09-05:00"
+  },
+  {
+    "name": "launcher",
+    "remote": "https://github.com/DesktopGooseUnofficial/launcher.git",
+    "commit": "45101dedc79303df7dfe87543c5732b4f1c5e965",
+    "date": "2024-05-17T11:00:10+02:00"
+  }
+]

@@ -1,0 +1,177 @@
+[
+  {
+    "full_name": "DesktopGooseUnofficial/ResourceHub",
+    "description": "ResourceHub, for everything Desktop Goose",
+    "default_branch": "master"
+  },
+  {
+    "full_name": "TheOrlando/DesktopGooseMod_Toys",
+    "description": "Mod that adds toys to Desktop Goose",
+    "default_branch": "master"
+  },
+  {
+    "full_name": "TogoFire/DesktopGoose",
+    "description": "Bring a funny custom goose to your desktop",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "elliotgsy/DesktopGooseDecompiled",
+    "description": "DesktopGooseDecompiled",
+    "default_branch": "master"
+  },
+  {
+    "full_name": "caofangkuai/GooseDroid",
+    "description": "Desktop Goose but for Android",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "NguyAnhQuan/DesktopGoose",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "Legnine/DesktopGoose",
+    "description": "Desktop goose off-site download",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "LeGeekDeBase/BadUsb---DesktopGoose",
+    "description": "Launch Desktop Goose with Flipper zero BadUsb",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "GamerPi/DesktopGoose",
+    "description": "DesktopGoose for Flipper Zero",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "claudepc42/DesktopGoose-PyGoose",
+    "description": "A Python/PyQt6 reimplementation and continuation of samperson's Desktop Goose — a chaotic little goose that wanders your screen, steals your mouse, and leaves you passive-aggressive notes.",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "valkytalky/BadGoose",
+    "description": "DesktopGoose",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "desktopgoose/desktopgoose.github.io",
+    "description": "Desktop Goose website",
+    "default_branch": "master"
+  },
+  {
+    "full_name": "Berto1019/DesktopGooseFlipper",
+    "description": "Both Python and Powershell Ducky Scripts Linking to a Github Repo & Running Goose Script :)",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "corex-cpu/desktopgoose",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "JTCozart/desktopgoose",
+    "description": "I needed a spot to save a file for download",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "NugqetGoose-CKamoly/desktopgoosemods",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "KleiFrickHeckDeck264/DesktopGoose-Mods",
+    "description": "mods i made for desktopgoose",
+    "default_branch": "master"
+  },
+  {
+    "full_name": "WilkinTheCatCoder/desktopgooseupdate",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "901238746/desktopgoosestuff",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "lvchiyang/DesktopGoose",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "kacpero1/DesktopGoose",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "CrunchyBlue/DesktopGoose",
+    "description": null,
+    "default_branch": "master"
+  },
+  {
+    "full_name": "Psykek66/DesktopGoose",
+    "description": "My mods for the DesktopGoose (by Samperson)",
+    "default_branch": "master"
+  },
+  {
+    "full_name": "MichaelExperuim/DesktopGoose",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "OrvexUploads/DesktopGoose",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "Vinzent16/DesktopGoose",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "UtilityShow/DesktopGoose",
+    "description": "I have created a goose that lives on your desktop. He is an asshole.",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "JonDoge42/DesktopGooseModsSource",
+    "description": "Source Code of my jank ass mods for https://samperson.itch.io/desktop-goose",
+    "default_branch": "master"
+  },
+  {
+    "full_name": "ysplovewzj/desktopgoose-download",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "OwendB1/DesktopGooseDownload",
+    "description": "Simple download repo for desktop goose",
+    "default_branch": "production"
+  },
+  {
+    "full_name": "zhanghanboke/DesktopGoose-Plus",
+    "description": "给 Desktop Goose v0.3 写的增强 Mod：小伙伴群、托盘控制台与全局热键、 皮肤与彩虹渐变、番茄钟、118 句中文碎碎念。下载解压即用，不用编译。",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "neon443/DesktopGoose2",
+    "description": null,
+    "default_branch": "main"
+  },
+  {
+    "full_name": "angel452/DesktopGoose",
+    "description": "A pixel-art goose that lives on your macOS screen. Swift + AppKit, no Xcode required.",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "simonklaren/DesktopGoose-Prank",
+    "description": "Private customized Desktop Goose fork with distributed window drops and prank tooling",
+    "default_branch": "main"
+  },
+  {
+    "full_name": "TheOrlando/DesktopGooseMod_Ball",
+    "description": "Mod for Desktop Goose which adds a ball to play with.",
+    "default_branch": "master"
+  }
+]

@@ -1,0 +1,14 @@
+research/*/
+artifacts/*.log
+artifacts/test-*/
+artifacts/source-bundle/
+artifacts/package-smoke/
+artifacts/superseded-prototype/
+artifacts/desktop-source-bundle/
+artifacts/desktop-package-smoke/
+*.user
+*.pdb
+obj/
+bin/
+artifacts/build-tools/
+artifacts/live-test-data/
