@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType><UseWindowsForms>true</UseWindowsForms><AssemblyName>Goose.Tests</AssemblyName></PropertyGroup>
+  <PropertyGroup><OutputType>Exe</OutputType><UseWindowsForms>true</UseWindowsForms><AssemblyName>Goose.Tests</AssemblyName><ApplicationManifest>../app.manifest</ApplicationManifest><StartupObject>SecondHonk.TestRunner</StartupObject></PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../src/GooseOnTheLoose.csproj" />
     <EmbeddedResource Include="../tools/fixtures/stock-honk-0.3.png" LogicalName="DesktopGoose2.Tests.StockHonk" />

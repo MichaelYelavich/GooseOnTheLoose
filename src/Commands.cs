@@ -14,7 +14,7 @@ namespace SecondHonk
     }
     public static class CommandRegistry
     {
-        public static readonly GooseCommand[] All = { new GooseCommand("come", 100, Keys.G), new GooseCommand("peas", 101, Keys.F), new GooseCommand("ball", 102, Keys.B), new GooseCommand("fetch", 103, Keys.T), new GooseCommand("note", 104, Keys.N), new GooseCommand("image", 105, Keys.I), new GooseCommand("honk", 106, Keys.H), new GooseCommand("pause", 107, Keys.P), new GooseCommand("quiet", 108, Keys.K), new GooseCommand("quit", 109, Keys.Q), new GooseCommand("menu", 110, Keys.None), new GooseCommand("toolbox", 111, Keys.None), new GooseCommand("content-folder", 112, Keys.None), new GooseCommand("reload", 113, Keys.None), new GooseCommand("clear", 114, Keys.None) };
+        public static readonly GooseCommand[] All = { new GooseCommand("come", 100, Keys.G), new GooseCommand("peas", 101, Keys.F), new GooseCommand("ball", 102, Keys.B), new GooseCommand("fetch", 103, Keys.T), new GooseCommand("note", 104, Keys.N), new GooseCommand("image", 105, Keys.I), new GooseCommand("honk", 106, Keys.H), new GooseCommand("pause", 107, Keys.P), new GooseCommand("quiet", 108, Keys.K), new GooseCommand("quit", 109, Keys.Q), new GooseCommand("menu", 110, Keys.None), new GooseCommand("toolbox", 111, Keys.None), new GooseCommand("content-folder", 112, Keys.None), new GooseCommand("reload", 113, Keys.None), new GooseCommand("clear", 114, Keys.None), new GooseCommand("diagnostics", 115, Keys.None) };
         public static GooseCommand Find(string name)
         {
             return All.FirstOrDefault(c => c.Name == name);

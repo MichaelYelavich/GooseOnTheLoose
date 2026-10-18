@@ -6,230 +6,6 @@ using System.Web.Script.Serialization;
 
 namespace SecondHonk
 {
-    public struct V
-    {
-        public float X, Y;
-        public V(float x, float y)
-        {
-            X = x;
-            Y = y;
-        }
-        public float Length
-        {
-            get
-            {
-                return (float)Math.Sqrt(X * X + Y * Y);
-            }
-        }
-        public V Unit
-        {
-            get
-            {
-                return Length < .001f ? new V(1, 0) : this / Length;
-            }
-        }
-        public static V operator +(V a, V b)
-        {
-            return new V(a.X + b.X, a.Y + b.Y);
-        }
-        public static V operator -(V a, V b)
-        {
-            return new V(a.X - b.X, a.Y - b.Y);
-        }
-        public static V operator *(V a, float b)
-        {
-            return new V(a.X * b, a.Y * b);
-        }
-        public static V operator /(V a, float b)
-        {
-            return new V(a.X / b, a.Y / b);
-        }
-        public static float Distance(V a, V b)
-        {
-            return (a - b).Length;
-        }
-        public static V Direction(float angle)
-        {
-            return new V((float)Math.Cos(angle), (float)Math.Sin(angle));
-        }
-        public static float Angle(V v)
-        {
-            return (float)Math.Atan2(v.Y, v.X);
-        }
-        public static float Turn(float from, float to, float maximum)
-        {
-            float d = to - from;
-            while (d > Math.PI)
-                d -= (float)Math.PI * 2;
-            while (d < -Math.PI)
-                d += (float)Math.PI * 2;
-            return from + Math.Max(-maximum, Math.Min(maximum, d));
-        }
-    }
-    public sealed class SaveData
-    {
-        public int Version = 2;
-        public bool Sound = true, Mischief = true, RandomAttacks = false, MouseSteal = true, Companion = false, Quiet = false, ReducedMotion = false;
-        public string Hat = "None", Monitor = "";
-        public float Scale = 1.5f;
-    }
-    public static class Store
-    {
-        public static string Root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "DesktopGoose2");
-        public static string Warning = "";
-        public static SaveData Load()
-        {
-            string p = Path.Combine(Root, "settings.json");
-            foreach (string f in new[] { p, p + ".bak" })
-            if (File.Exists(f))
-                try
-                {
-                    SaveData s = new JavaScriptSerializer().Deserialize<SaveData>(File.ReadAllText(f));
-                    if (s == null || s.Version != 2)
-                        throw new InvalidDataException("Unknown settings version");
-                    if (!new[] { "None", "Scarf", "Sunhat" }.Contains(s.Hat))
-                        s.Hat = "None";
-                    if (float.IsNaN(s.Scale) || float.IsInfinity(s.Scale))
-                        s.Scale = 1.5f;
-                    s.Scale = Math.Max(1, Math.Min(2, s.Scale));
-                    if (f.EndsWith(".bak"))
-                        Warning = "Recovered the previous settings backup.";
-                    return s;
-                }
-                catch (Exception) { Warning = "Settings could not be read. Defaults are in use; old settings were preserved."; }
-            return new SaveData();
-        }
-        public static bool Save(SaveData data)
-        {
-            try
-            {
-                Directory.CreateDirectory(Root);
-                string p = Path.Combine(Root, "settings.json"), temp = p + ".tmp";
-                File.WriteAllText(temp, new JavaScriptSerializer().Serialize(data));
-                if (File.Exists(p))
-                    File.Replace(temp, p, p + ".bak", true);
-                else
-                    File.Move(temp, p);
-                return true;
-            }
-            catch (Exception e) { Warning = e.Message; return false; }
-        }
-    }
-    public sealed class ContentPack
-    {
-        public string name; public string[] notes;
-    }
-    public sealed class Content
-    {
-        public readonly List<string> Notes = new List<string>(), Images = new List<string>(), Warnings = new List<string>();
-        public Content(string directory)
-        {
-            Reload(directory);
-        }
-        public void Reload(string directory)
-        {
-            Notes.Clear();
-            Images.Clear();
-            Warnings.Clear();
-            if (Directory.Exists(directory))
-            foreach (string path in Directory.GetFiles(directory, "*.json").Where(p => Path.GetFileName(p) != "settings.json" && Path.GetFileName(p) != "runtime.json").OrderBy(p => p))
-                try
-                {
-                    if (new FileInfo(path).Length > 131072)
-                        throw new InvalidDataException("Pack exceeds 128 KB");
-                    var pack = new JavaScriptSerializer().Deserialize<ContentPack>(File.ReadAllText(path));
-                    if (pack == null || pack.notes == null || pack.notes.Length > 100)
-                        throw new InvalidDataException("Expected a notes array (up to 100 entries)");
-                    Notes.AddRange(pack.notes.Where(n => !String.IsNullOrWhiteSpace(n) && n.Length <= 1000));
-                }
-                catch (Exception e) { Warnings.Add(Path.GetFileName(path) + ": " + e.Message); }
-            string texts = Path.Combine(directory, "Notes");
-            if (Directory.Exists(texts))
-            foreach (string path in Directory.GetFiles(texts, "*.txt").OrderBy(x => x))
-                try
-                {
-                    if (new FileInfo(path).Length <= 65536)
-                    {
-                        string text = File.ReadAllText(path);
-                        if (!String.IsNullOrWhiteSpace(text) && text.Length <= 1000)
-                            Notes.Add(text);
-                    }
-                }
-                catch (Exception e) { Warnings.Add(Path.GetFileName(path) + ": " + e.Message); }
-            foreach (string name in new[] { "Pictures", "Images" })
-            {
-                string images = Path.Combine(directory, name);
-                if (Directory.Exists(images))
-                foreach (string p in Directory.GetFiles(images).OrderBy(x => x))
-                    try
-                    {
-                        if (new[] { ".png", ".jpg", ".jpeg", ".gif" }.Contains(Path.GetExtension(p).ToLowerInvariant()) && new FileInfo(p).Length <= 8388608)
-                        using (var image = System.Drawing.Image.FromFile(p))
-                        {
-                            if (image.Width <= 8192 && image.Height <= 8192)
-                                Images.Add(p);
-                        }
-                    }
-                    catch (Exception e) { Warnings.Add(Path.GetFileName(p) + ": " + e.Message); }
-            }
-            if (Notes.Count == 0)
-                Notes.Add("I have stolen this window.\r\nHonk.");
-        }
-    }
-    public enum Activity
-    {
-        Wander, Chase, Eat, Ball, Fetch, Return, Mud, Deliver, Sleep, Follow
-    }
-    public sealed class Goose
-    {
-        public V Pos, Velocity, Target, LeftFoot, RightFoot, FootOrigin, FootDestination;
-        public float Direction, HeadDirection, Neck, FootTime, StepDuration = .2f, Wait, TaskTime;
-        public int MovingFoot = -1;
-        public bool FeetReady, Swimming;
-        public Coating Coating;
-        public int TrailRemaining;
-        public Activity Task = Activity.Wander;
-        public Goose(V p)
-        {
-            Pos = Target = p;
-            Direction = 0;
-        }
-        public void Place(V p)
-        {
-            Pos = Target = p;
-            Velocity = new V();
-            FeetReady = false;
-            MovingFoot = -1;
-        }
-    }
-    public enum Coating
-    {
-        Dry, Wet, Mud
-    }
-    public enum ToyKind
-    {
-        Ball, Stick, Peas, Duck, Pond, Puddle, Mud
-    }
-    public sealed class DesktopObject
-    {
-        public Guid Id = Guid.NewGuid(); public ToyKind Kind; public V Pos, Size, Velocity; public bool Carried, Dragging; public float Age, Cooldown;
-        public bool Surface
-        {
-            get
-            {
-                return Kind == ToyKind.Pond || Kind == ToyKind.Puddle || Kind == ToyKind.Mud;
-            }
-        }
-        public bool Contains(V p)
-        {
-            V d = p - Pos;
-            return Surface ? (d.X * d.X / (Size.X * Size.X * .25f) + d.Y * d.Y / (Size.Y * Size.Y * .25f) <= 1) : d.Length < Math.Max(Size.X, Size.Y) * .5f;
-        }
-    }
-    public sealed class Mark
-    {
-        public V Pos; public float Age, Angle, Scale = 1; public Coating Coating = Coating.Mud;
-    }
     public sealed class World
     {
         public readonly SaveData Data;
@@ -244,7 +20,6 @@ namespace SecondHonk
         readonly Queue<int> deck = new Queue<int>();
         int noteIndex, imageIndex;
         float autoIn = 20, ballCooldown, napIn = 180, waitOffscreen;
-        bool deliverImage;
         public float Width = 1280, Height = 752, Time, GrabRemaining, QuietRemaining;
         public V Pointer, ReturnPoint, GrabTarget;
         public V BallPos
@@ -404,8 +179,8 @@ namespace SecondHonk
         public void SetTask(Activity task)
         {
             if (task != Activity.Fetch && task != Activity.Return)
-            foreach (var o in Objects)
-                o.Carried = false;
+                foreach (var o in Objects)
+                    o.Carried = false;
             Goose.Task = task;
             Goose.TaskTime = 0;
             Goose.Wait = 0;
@@ -520,7 +295,8 @@ namespace SecondHonk
             if (Paused || Data.Quiet)
                 return;
             GrabRemaining = 0;
-            deliverImage = image && Content.Images.Count > 0;
+            DeliveryText = Content.Notes.Count == 0 ? "Have a honk." : Content.Notes[(noteIndex++ & int.MaxValue) % Content.Notes.Count];
+            DeliveryImage = image && Content.Images.Count > 0 ? Content.Images[(imageIndex++ & int.MaxValue) % Content.Images.Count] : "";
             DeliverySide = Goose.Pos.X < Width / 2 ? -1 : 1;
             SetTask(Activity.Deliver);
             Goose.Target = new V(DeliverySide < 0 ? -75 * Scale : Width + 75 * Scale, Math.Max(120 * Scale, Math.Min(Height - 100 * Scale, Goose.Pos.Y)));
@@ -543,8 +319,8 @@ namespace SecondHonk
                 var choices = new List<int>();
                 int[] weights = { Behavior.MudWeight, Behavior.NoteWeight, Behavior.PictureWeight, Behavior.ChaseWeight, Behavior.ToyWeight };
                 for (int k = 0; k < weights.Length; k++)
-                for (int j = 0; j < weights[k]; j++)
-                    choices.Add(k);
+                    for (int j = 0; j < weights[k]; j++)
+                        choices.Add(k);
                 if (choices.Count == 0)
                     return;
                 while (choices.Count > 0)
@@ -739,13 +515,13 @@ namespace SecondHonk
                 if (o.Kind == ToyKind.Duck && Objects.Any(s => s.Kind == ToyKind.Pond && s.Contains(o.Pos)))
                     o.Pos += new V((float)Math.Sin(Time + o.Pos.Y) * dt * 4, 0);
                 if (o.Kind == ToyKind.Ball || o.Kind == ToyKind.Duck)
-                foreach (var g in Data.Companion ? new[] { Goose, Friend } : new[] { Goose })
-                if (o.Cooldown <= 0 && V.Distance(g.Pos, o.Pos) < 35 * Scale)
-                {
-                    o.Velocity = (o.Pos - g.Pos).Unit * Behavior.NudgeSpeed * Scale;
-                    o.Cooldown = 1;
-                    Kicks++;
-                }
+                    foreach (var g in Data.Companion ? new[] { Goose, Friend } : new[] { Goose })
+                        if (o.Cooldown <= 0 && V.Distance(g.Pos, o.Pos) < 35 * Scale)
+                        {
+                            o.Velocity = (o.Pos - g.Pos).Unit * Behavior.NudgeSpeed * Scale;
+                            o.Cooldown = 1;
+                            Kicks++;
+                        }
             }
             if (Data.Quiet && (Goose.Task == Activity.Chase || Goose.Task == Activity.Mud || Goose.Task == Activity.Deliver || Goose.Task == Activity.Fetch || Goose.Task == Activity.Ball))
                 Cancel();
@@ -897,8 +673,6 @@ namespace SecondHonk
                         waitOffscreen -= dt;
                         if (waitOffscreen <= 0)
                         {
-                            DeliveryText = Content.Notes[noteIndex++ % Content.Notes.Count];
-                            DeliveryImage = deliverImage ? Content.Images[imageIndex++ % Content.Images.Count] : "";
                             DeliveryStage = 2;
                             Goose.Target = Clamp(new V(Width * (DeliverySide < 0 ? .48f : .52f), Height * .55f));
                             if (DeliveryStarted != null)

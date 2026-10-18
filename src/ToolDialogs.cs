@@ -7,7 +7,7 @@ namespace SecondHonk
     {
         public ToolDialogOwner()
         {
-            Text = "Desktop Goose 2 tools";
+            Text = "Goose on the Loose tools";
             ShowInTaskbar = false;
             FormBorderStyle = FormBorderStyle.FixedToolWindow;
             StartPosition = FormStartPosition.CenterScreen;

@@ -43,14 +43,14 @@ namespace SecondHonk
                     throw new InvalidDataException("Picture animation exceeds 500 frames or 128 million decoded pixels.");
                 using (var decoded = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppPArgb))
                 using (var g = Graphics.FromImage(decoded))
-                for (int i = 0; i < count; i++)
-                {
-                    cancel.ThrowIfCancellationRequested();
-                    if (animated)
-                        image.SelectActiveFrame(FrameDimension.Time, i);
-                    g.Clear(Color.Transparent);
-                    g.DrawImageUnscaled(image, 0, 0);
-                }
+                    for (int i = 0; i < count; i++)
+                    {
+                        cancel.ThrowIfCancellationRequested();
+                        if (animated)
+                            image.SelectActiveFrame(FrameDimension.Time, i);
+                        g.Clear(Color.Transparent);
+                        g.DrawImageUnscaled(image, 0, 0);
+                    }
             }
             cancel.ThrowIfCancellationRequested();
             return bytes;
@@ -111,26 +111,35 @@ namespace SecondHonk
         }
         public static void MigrateStock(string bundled, string root)
         {
+            try
+            {
+                MigrateStockCore(bundled, root);
+            }
+            catch (IOException error) { Program.Log(error); }
+            catch (UnauthorizedAccessException error) { Program.Log(error); }
+        }
+        static void MigrateStockCore(string bundled, string root)
+        {
             string replacement = Path.Combine(bundled, "Packs", "Images", "honk.png");
             if (!File.Exists(replacement) || Hash(replacement) == OldStockHash)
                 return;
             foreach (string folder in new[] { Path.Combine(root, "Pictures"), Path.Combine(root, "Images") })
-            if (Directory.Exists(folder))
-            foreach (string file in Directory.GetFiles(folder, "*.png"))
-                try
-                {
-                    if (new FileInfo(file).Length > 8388608 || Hash(file) != OldStockHash)
-                        continue;
-                    string temp = Path.Combine(folder, ".dg2-stock-" + Guid.NewGuid().ToString("N") + ".tmp");
-                    try
-                    {
-                        File.Copy(replacement, temp);
-                        if (Hash(file) == OldStockHash)
-                            File.Replace(temp, file, null);
-                    }
-                    finally { if (File.Exists(temp)) File.Delete(temp); }
-                }
-                catch (Exception e) { Program.Log(e); }
+                if (Directory.Exists(folder))
+                    foreach (string file in Directory.GetFiles(folder, "*.png"))
+                        try
+                        {
+                            if (new FileInfo(file).Length > 8388608 || Hash(file) != OldStockHash)
+                                continue;
+                            string temp = Path.Combine(folder, ".dg2-stock-" + Guid.NewGuid().ToString("N") + ".tmp");
+                            try
+                            {
+                                File.Copy(replacement, temp);
+                                if (Hash(file) == OldStockHash)
+                                    File.Replace(temp, file, null);
+                            }
+                            finally { if (File.Exists(temp)) File.Delete(temp); }
+                        }
+                        catch (Exception e) { Program.Log(e); }
         }
     }
     public sealed class ImportResult

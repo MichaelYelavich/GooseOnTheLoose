@@ -95,9 +95,9 @@ namespace SecondHonk
                 }
                 bool equal = true;
                 for (int y = 320; y < 385; y++)
-                for (int x = 418; x < 483; x++)
-                if (full.GetPixel(x, y) != crop.GetPixel(x - 137, y - 91))
-                    equal = false;
+                    for (int x = 418; x < 483; x++)
+                        if (full.GetPixel(x, y) != crop.GetPixel(x - 137, y - 91))
+                            equal = false;
                 check(equal && cache.Count == 1, "Cached footprint pixels remain identical across moving and resized overlay crops");
                 mark.Age = 9;
                 using (var faded = new Bitmap(1000, 700))
@@ -192,7 +192,9 @@ namespace SecondHonk
                 IntPtr owner = session.DialogOwner.Handle;
                 for (int i = 0; i < 4; i++)
                 {
-                    session.TestToolboxCycle();
+                    session.ShowToolbox();
+                    foreach (var box in System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>().OfType<ToyBox>().ToArray())
+                        box.Close();
                     session.RunModalTool(o => check(o.Handle == owner && !o.IsDisposed && session.World.Paused, "Import owner survives a closed Toy Box, cycle " + (i + 1)));
                 }
                 check(!session.World.Paused && !session.IsExited, "Modal tools restore the previous running state");
@@ -224,7 +226,9 @@ namespace SecondHonk
                     for (int cycle = 0; cycle < 3; cycle++)
                     {
                         if (cycle > 0)
-                            session.TestToolboxCycle();
+                            session.ShowToolbox();
+                        foreach (var box in System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>().OfType<ToyBox>().ToArray())
+                            box.Close();
                         DialogResult result = DialogResult.None;
                         session.RunModalTool(owner => { using (var picker = new OpenFileDialog { Title = "Goose import regression check", InitialDirectory = Store.Root, Filter = "Pictures|*.png;*.jpg;*.gif" }) using (var close = new System.Windows.Forms.Timer { Interval = 250 }) { close.Tick += (s, e) => SecondHonk.Native.CloseOwnedDialogs(owner.Handle); close.Start(); result = picker.ShowDialog(owner); close.Stop(); } });
                         if (result != DialogResult.Cancel || session.IsExited || session.World.Paused)
@@ -288,15 +292,15 @@ namespace SecondHonk
                 File.WriteAllBytes(animation, gifBytes);
                 int baseline = GetGuiResources(System.Diagnostics.Process.GetCurrentProcess().Handle, 0);
                 for (int i = 0; i < 24; i++)
-                using (var gift = new GooseWindow("", i % 2 == 0 ? picture : animation))
-                {
-                    gift.Location = new Point(-10000, -10000);
-                    gift.Show();
-                    Application.DoEvents();
-                    using (var bmp = new Bitmap(gift.Width, gift.Height))
-                        gift.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
-                    gift.Close();
-                }
+                    using (var gift = new GooseWindow("", i % 2 == 0 ? picture : animation))
+                    {
+                        gift.Location = new Point(-10000, -10000);
+                        gift.Show();
+                        Application.DoEvents();
+                        using (var bmp = new Bitmap(gift.Width, gift.Height))
+                            gift.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
+                        gift.Close();
+                    }
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 int final = GetGuiResources(System.Diagnostics.Process.GetCurrentProcess().Handle, 0);
@@ -331,20 +335,20 @@ namespace SecondHonk
                             Art.Scene(cg, w);
                             int dark = 0, red = 0, gold = 0;
                             for (int y = 35; y < 215; y++)
-                            for (int x = 205; x < 335; x++)
-                            {
-                                Color p = cell.GetPixel(x, y);
-                                if (p.A > 100 && p.R < 70 && p.G < 70 && p.B < 70)
-                                    dark++;
-                                if (p.A > 100 && p.R > 170 && p.G < 100 && p.B < 90)
-                                    red++;
-                                if (p.A > 100 && p.R > 200 && p.G > 170 && p.G < 210 && p.B > 100 && p.B < 160)
-                                    gold++;
-                            }
+                                for (int x = 205; x < 335; x++)
+                                {
+                                    Color p = cell.GetPixel(x, y);
+                                    if (p.A > 100 && p.R < 70 && p.G < 70 && p.B < 70)
+                                        dark++;
+                                    if (p.A > 100 && p.R > 170 && p.G < 100 && p.B < 90)
+                                        red++;
+                                    if (p.A > 100 && p.R > 200 && p.G > 170 && p.G < 210 && p.B > 100 && p.B < 160)
+                                        gold++;
+                                }
                             check(dark > 20 && (hat != "Scarf" || red > 5) && (hat != "Sunhat" || gold > 20), "Canada companion and shared " + hat + " appearance render at scale " + scale);
                             sg.DrawImageUnscaled(cell, column * 340, row * 240);
                             using (var f = new Font("Segoe UI", 10))
-                                sg.DrawString(hat + " Â· " + scale + "x", f, Brushes.Black, column * 340 + 12, row * 240 + 10);
+                                sg.DrawString(hat + " · " + scale + "x", f, Brushes.Black, column * 340 + 12, row * 240 + 10);
                             w.Data.ReducedMotion = true;
                             w.Exploding = true;
                             w.ExplosionTime = .1f;

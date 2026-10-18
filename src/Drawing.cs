@@ -87,8 +87,8 @@ namespace SecondHonk
                 Line(g, Color.FromArgb(163, 93, 60), 2 * scale, head + new V(-6 * scale, -12 * scale), head + new V(6 * scale, -12 * scale));
             }
             if (asleep)
-            using (var brush = new SolidBrush(Color.FromArgb(210, 110, 110, 110)))
-                g.DrawString("z z", sleepyFont, brush, pos.X + 25 * scale, pos.Y - 55 * scale);
+                using (var brush = new SolidBrush(Color.FromArgb(210, 110, 110, 110)))
+                    g.DrawString("z z", sleepyFont, brush, pos.X + 25 * scale, pos.Y - 55 * scale);
         }
         public static void Scene(Graphics g, World world)
         {
@@ -100,8 +100,8 @@ namespace SecondHonk
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             foreach (var o in world.Objects)
-            if (o.Surface)
-                Object(g, o, world.Scale, world.Time);
+                if (o.Surface)
+                    Object(g, o, world.Scale, world.Time);
             footprints.Draw(g, world);
             if (world.Exploding)
             {
@@ -116,15 +116,15 @@ namespace SecondHonk
             if (world.Data.Companion && world.Friend.Pos.Y >= world.Goose.Pos.Y)
                 Goose(g, world.Friend, world.GooseScale(world.Friend), world.Data.Hat, true, world.Data.ReducedMotion);
             foreach (var goose in world.Data.Companion ? new[] { world.Goose, world.Friend } : new[] { world.Goose })
-            if (goose.Swimming)
-            {
-                using (var pen = new Pen(Color.FromArgb(155, 217, 245, 250), 2))
-                for (int i = 0; i < 2; i++)
+                if (goose.Swimming)
                 {
-                    float r = 24 + (world.Data.ReducedMotion ? i * 13 : (world.Time * 18 + i * 13) % 26);
-                    g.DrawEllipse(pen, goose.Pos.X - r, goose.Pos.Y - 6, r * 2, 12);
+                    using (var pen = new Pen(Color.FromArgb(155, 217, 245, 250), 2))
+                        for (int i = 0; i < 2; i++)
+                        {
+                            float r = 24 + (world.Data.ReducedMotion ? i * 13 : (world.Time * 18 + i * 13) % 26);
+                            g.DrawEllipse(pen, goose.Pos.X - r, goose.Pos.Y - 6, r * 2, 12);
+                        }
                 }
-            }
             if (world.CarryingStick)
                 Stick(g, world.Beak(world.Goose), world.Scale);
             if (world.DismissRemaining > 0)

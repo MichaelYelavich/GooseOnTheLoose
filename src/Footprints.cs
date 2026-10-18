@@ -10,6 +10,10 @@ namespace SecondHonk
     public sealed class FootprintRenderer : IDisposable
     {
         readonly Dictionary<Mark, Bitmap> stamps = new Dictionary<Mark, Bitmap>();
+        readonly HashSet<Mark> alive = new HashSet<Mark>();
+        readonly List<Mark> retired = new List<Mark>();
+        readonly ImageAttributes attrs = new ImageAttributes();
+        readonly ColorMatrix matrix = new ColorMatrix();
         public int Count
         {
             get
@@ -19,11 +23,28 @@ namespace SecondHonk
         }
         public void Draw(Graphics g, World world)
         {
-            var alive = new HashSet<Mark>(world.Marks);
-            foreach (var old in stamps.Keys.Where(m => !alive.Contains(m)).ToArray())
+            bool changed = world.Marks.Count != stamps.Count;
+            if (!changed)
+                foreach (var mark in world.Marks)
+                    if (!stamps.ContainsKey(mark))
+                    {
+                        changed = true;
+                        break;
+                    }
+            if (changed)
             {
-                stamps[old].Dispose();
-                stamps.Remove(old);
+                alive.Clear();
+                foreach (var mark in world.Marks)
+                    alive.Add(mark);
+                retired.Clear();
+                foreach (var mark in stamps.Keys)
+                    if (!alive.Contains(mark))
+                        retired.Add(mark);
+                foreach (var old in retired)
+                {
+                    stamps[old].Dispose();
+                    stamps.Remove(old);
+                }
             }
             var state = g.Save();
             g.PixelOffsetMode = PixelOffsetMode.None;
@@ -39,9 +60,7 @@ namespace SecondHonk
                         stamps.Add(mark, stamp);
                     }
                     float fade = Math.Max(0, Math.Min(1, (world.Behavior.FootprintSeconds - mark.Age) / 2));
-                    using (var attrs = new ImageAttributes())
                     {
-                        var matrix = new ColorMatrix();
                         matrix.Matrix33 = fade;
                         attrs.SetColorMatrix(matrix);
                         g.DrawImage(stamp, new Rectangle((int)Math.Round(mark.Pos.X) - 32, (int)Math.Round(mark.Pos.Y) - 32, 64, 64), 0, 0, 64, 64, GraphicsUnit.Pixel, attrs);
@@ -75,6 +94,7 @@ namespace SecondHonk
             foreach (var stamp in stamps.Values)
                 stamp.Dispose();
             stamps.Clear();
+            attrs.Dispose();
         }
     }
 }

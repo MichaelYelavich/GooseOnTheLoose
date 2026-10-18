@@ -150,6 +150,7 @@ namespace SecondHonk
                 }
                 Extended(content);
                 PatchTests.Run(content, Assert);
+                BetaTests.Run(content, Assert);
                 results.Add("\nAll " + results.Count + " desktop checks passed. Windows " + Environment.OSVersion.Version + ".");
                 Environment.ExitCode = 0;
             }
@@ -242,7 +243,11 @@ namespace SecondHonk
                 string note = Path.Combine(Store.Root, "Notes", "Live.txt");
                 File.WriteAllText(note, "Live reload honk");
                 System.Threading.Thread.Sleep(800);
-                monitor.Tick();
+                for (int poll = 0; poll < 100 && !contentWorld.Content.Notes.Contains("Live reload honk"); poll++)
+                {
+                    monitor.Tick();
+                    System.Threading.Thread.Sleep(10);
+                }
                 Assert(contentWorld.Content.Notes.Contains("Live reload honk"), "Folder watcher reloads saved notes without restarting");
                 string preset = Path.Combine(Store.Root, "Behaviors", "default.json");
                 File.WriteAllText(preset, "{\"TrailSteps\":7,\"FootprintSeconds\":4}");
@@ -289,7 +294,9 @@ namespace SecondHonk
             using (var session = new DesktopSession(new SaveData { Sound = false, Companion = true }, new Content(Store.Root), "", true))
             {
                 session.World.PlaceObject(ToyKind.Pond, new V(300, 350));
-                session.TestDelivery();
+                session.World.DeliveryText = "Shutdown test note";
+                session.World.DeliveryImage = "";
+                session.BeginDelivery();
                 session.World.GrabRemaining = 1;
                 session.World.Paused = true;
                 session.AdvanceDismissal(true, .1f);
@@ -312,7 +319,9 @@ namespace SecondHonk
             }
             using (var session = new DesktopSession(new SaveData { Sound = false }, new Content(Store.Root), "", true))
             {
-                session.TestDelivery();
+                session.World.DeliveryText = "Shutdown test note";
+                session.World.DeliveryImage = "";
+                session.BeginDelivery();
                 session.World.PlaceObject(ToyKind.Ball, new V(300, 350));
                 session.ExitThread();
                 Assert(session.IsExited && session.World.Objects.Count == 0 && !System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>().Any(), "Immediate quit uses the same complete cleanup without animation");
