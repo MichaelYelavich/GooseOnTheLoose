@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>GooseOnTheLoose</AssemblyName>
+    <ApplicationManifest>../app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="Exists('../.work/generated/GooseOnTheLoose.ico')">../.work/generated/GooseOnTheLoose.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Core/**/*.cs" />
+    <ProjectReference Include="Core/Goose.Core.csproj" />
+    <Reference Include="System.Web.Extensions" />
+    <InternalsVisibleTo Include="Goose.Tests" />
+    <InternalsVisibleTo Include="Goose.AssetGenerator" />
+  </ItemGroup>
+</Project>

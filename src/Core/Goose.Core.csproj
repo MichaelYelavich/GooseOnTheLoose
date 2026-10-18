@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><AssemblyName>Goose.Core</AssemblyName></PropertyGroup>
+  <ItemGroup><Reference Include="System.Drawing" /><Reference Include="System.Web.Extensions" /></ItemGroup>
+</Project>

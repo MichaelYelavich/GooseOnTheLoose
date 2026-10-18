@@ -1,18 +1,22 @@
-$ErrorActionPreference = 'Stop'
-Set-Location $PSScriptRoot
-$compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-if (!(Test-Path -LiteralPath $compiler)) { throw '.NET Framework 4.x compiler was not found.' }
-New-Item -ItemType Directory -Force dist,dist\Packs | Out-Null
-$sourceFiles = @(Get-ChildItem -LiteralPath src -Filter '*.cs' | ForEach-Object { $_.FullName })
-$compilerOptions = @('/nologo','/target:winexe','/platform:anycpu','/optimize+','/utf8output','/out:dist\DesktopGoose2.exe','/win32manifest:app.manifest','/reference:System.Drawing.dll','/reference:System.Windows.Forms.dll','/reference:System.Web.Extensions.dll','/resource:tools\fixtures\stock-honk-0.3.png,DesktopGoose2.Tests.StockHonk')
-& $compiler $compilerOptions $sourceFiles
-if ($LASTEXITCODE -ne 0) { throw 'Compilation failed.' }
-Copy-Item -LiteralPath Packs\goose-notes.json -Destination dist\Packs\goose-notes.json -Force
-Copy-Item -LiteralPath Assets -Destination dist -Recurse -Force
-$assets=Start-Process -FilePath (Join-Path $PSScriptRoot 'dist\DesktopGoose2.exe') -ArgumentList '--make-assets' -Wait -PassThru -WindowStyle Hidden
-if ($assets.ExitCode -ne 0) { throw 'Asset generation failed.' }
-& $compiler $compilerOptions /win32icon:dist\DesktopGoose2.ico $sourceFiles
-if ($LASTEXITCODE -ne 0) { throw 'Final compilation failed.' }
-Copy-Item -LiteralPath README.md -Destination dist\README.md -Force
-Copy-Item -LiteralPath RESEARCH.md,VALIDATION.md,RELEASE_NOTES.md -Destination dist -Force
-Write-Output 'Built dist\DesktopGoose2.exe — desktop-only runtime'
+param([switch]$Locked)
+. (Join-Path $PSScriptRoot 'tools/common.ps1')
+Push-Location $ProjectRoot
+try {
+    $restore = @('restore', 'GooseOnTheLoose.slnx')
+    if ($Locked) { $restore += '--locked-mode' }
+    Invoke-Dotnet @restore
+    Invoke-Dotnet build GooseOnTheLoose.slnx -c Release --no-restore
+    $generated = Join-Path $ProjectRoot '.work/generated'
+    New-Item -ItemType Directory -Force $generated | Out-Null
+    & tools/AssetGenerator/bin/Release/Goose.AssetGenerator.exe $generated
+    if ($LASTEXITCODE -ne 0) { throw 'Asset generation failed.' }
+    Invoke-Dotnet build GooseOnTheLoose.slnx -c Release --no-restore
+    New-Item -ItemType Directory -Force dist | Out-Null
+    foreach ($name in @('GooseOnTheLoose.exe','GooseOnTheLoose.exe.config','Goose.Core.dll')) { Copy-Item -LiteralPath (Join-Path $ProjectRoot ('src/bin/Release/' + $name)) -Destination dist -Force }
+    Copy-Item -LiteralPath (Join-Path $generated 'GooseOnTheLoose.ico') -Destination dist -Force
+    foreach ($destination in @('dist','tests/bin/Release')) {
+        foreach ($folder in @('Assets','Packs')) { Copy-Item -LiteralPath $folder -Destination $destination -Recurse -Force }
+        Copy-Item -LiteralPath (Join-Path $generated 'Packs/Images') -Destination (Join-Path $destination 'Packs') -Recurse -Force
+    }
+    Copy-Item -LiteralPath README.md,RELEASE_NOTES.md,RESEARCH.md,VALIDATION.md -Destination dist -Force
+} finally { Pop-Location }

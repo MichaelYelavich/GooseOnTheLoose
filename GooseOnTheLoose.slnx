@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/Core/Goose.Core.csproj" />
+  <Project Path="src/GooseOnTheLoose.csproj" />
+  <Project Path="tests/Goose.Tests.csproj" />
+  <Project Path="tools/AssetGenerator/Goose.AssetGenerator.csproj" />
+</Solution>
