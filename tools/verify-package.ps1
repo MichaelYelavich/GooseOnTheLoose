@@ -22,6 +22,10 @@ try {
     $report.Add('PASS  Extracted portable application seeds, runs and quits with its bundled files.')
     & (Join-Path $source 'build.ps1') -Locked | Out-Null
     if (!(Test-Path -LiteralPath (Join-Path $source 'dist/GooseOnTheLoose.exe'))) { throw 'Source archive did not rebuild.' }
+    foreach ($binary in @('GooseOnTheLoose.exe','Goose.Core.dll')) {
+        if ((Get-FileHash -LiteralPath (Join-Path $source ('dist/'+$binary))).Hash -ne (Get-FileHash -LiteralPath (Join-Path $portable $binary)).Hash) { throw ('Source rebuild is not reproducible: '+$binary) }
+    }
+    $report.Add('PASS  Extracted source rebuild produces byte-identical application and core binaries.')
     & (Join-Path $source 'tools/verify.ps1') -SkipBuild | Out-Null
     $report.Add('PASS  Extracted source rebuilds with locked dependencies and passes all application regressions in a path containing spaces.')
     Add-Type -AssemblyName System.IO.Compression.FileSystem
