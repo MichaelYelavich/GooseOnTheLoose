@@ -45,7 +45,13 @@ namespace SecondHonk
                 return Interlocked.Read(ref bytes);
             }
         }
-        internal int CachedPictures { get { return cache.Count; } }
+        internal int CachedPictures
+        {
+            get
+            {
+                return cache.Count;
+            }
+        }
         public async Task<PreparedPicture> Prepare(string path, CancellationToken token)
         {
             if (disposed)

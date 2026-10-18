@@ -16,6 +16,7 @@ function Remove-WorkFolder([string]$Path) {
 }
 function Find-Inno([string]$Compiler) {
     if ($Compiler -and (Test-Path -LiteralPath $Compiler)) { return $Compiler }
+    if ($Compiler) { throw ('Inno Setup compiler not found: '+$Compiler) }
     $candidates = @($env:INNO_COMPILER, (Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'), (Join-Path $env:LOCALAPPDATA 'GooseBuildTools/Inno Setup/ISCC.exe'))
     foreach ($path in $candidates) { if ($path -and (Test-Path -LiteralPath $path)) { return $path } }
     throw 'Inno Setup 6 is required. Set INNO_COMPILER or pass -Compiler.'

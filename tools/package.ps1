@@ -2,6 +2,8 @@ param([string]$Compiler, [switch]$SkipBuild)
 . (Join-Path $PSScriptRoot 'common.ps1')
 Push-Location $ProjectRoot
 try {
+    $changes = & git status --porcelain --untracked-files=normal
+    if ($LASTEXITCODE -ne 0 -or $changes) { throw 'Commit the intended source before packaging; release binaries and source must describe the same commit.' }
     if (!$SkipBuild) { & ./build.ps1 -Locked }
     $Compiler = Find-Inno $Compiler
     $release = Join-Path $ProjectRoot '.work/release'

@@ -89,7 +89,7 @@ namespace SecondHonk
                     using (var prepared = preparation.Prepare(path, System.Threading.CancellationToken.None).GetAwaiter().GetResult())
                         check(prepared.Image.Width > 0, "Background picture preparation fully decodes picture " + i);
                 }
-                check(preparation.CachedBytes <= 16777216 && preparation.CachedPictures==4, "Validated-picture cache respects its count and memory budgets");
+                check(preparation.CachedBytes <= 16777216 && preparation.CachedPictures == 4, "Validated-picture cache respects its count and memory budgets");
                 using (var cancel = new System.Threading.CancellationTokenSource())
                 {
                     cancel.Cancel();
