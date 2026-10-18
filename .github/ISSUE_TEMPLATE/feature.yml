@@ -1,0 +1,10 @@
+name: Feature idea
+description: Suggest a personality, toy, interaction, or desktop improvement.
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should the geese do?
+      description: Describe the experience and how you would use it.
+    validations:
+      required: true

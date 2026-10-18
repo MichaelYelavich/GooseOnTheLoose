@@ -8,6 +8,12 @@ $ReleaseVersion = [string]$VersionDocument.Project.PropertyGroup.Version
 $FileVersion = [string]$VersionDocument.Project.PropertyGroup.FileVersion
 $PackagePrefix = [string]$VersionDocument.Project.PropertyGroup.PackagePrefix
 function Invoke-Dotnet { & $Dotnet @args; if ($LASTEXITCODE -ne 0) { throw ('dotnet failed: ' + ($args -join ' ')) } }
+function Remove-WorkFolder([string]$Path) {
+    $absolute = [IO.Path]::GetFullPath($Path)
+    $workRoot = [IO.Path]::GetFullPath((Join-Path $ProjectRoot '.work'))
+    if (!$absolute.StartsWith($workRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Cleanup path must be inside .work.' }
+    if (Test-Path -LiteralPath $absolute) { Remove-Item -LiteralPath $absolute -Recurse -Force }
+}
 function Find-Inno([string]$Compiler) {
     if ($Compiler -and (Test-Path -LiteralPath $Compiler)) { return $Compiler }
     $candidates = @($env:INNO_COMPILER, (Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'), (Join-Path $env:LOCALAPPDATA 'GooseBuildTools/Inno Setup/ISCC.exe'))

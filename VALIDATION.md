@@ -1,45 +1,39 @@
-# Desktop Goose 2 0.3.1 — verification
+# Beta Release 1 — validation
 
-Test host: Windows build 26300, .NET Framework 4.8. The patch retains the desktop-first runtime and existing settings format. Research references remain in RESEARCH.md; user-facing changes are in RELEASE_NOTES.md.
+Release: Goose on the Loose 0.4.0-beta.1. Test host: Windows 11 build 26300, x64, .NET Framework 4.8. Developer SDK: 10.0.402; Inno Setup: 6.7.3. The application and test runner report the real Windows version through their manifest.
 
-## Confirmed causes and fixes
+## Regressions and native checks
 
-The reported import crash is recorded in the existing application log as an ObjectDisposedException from CommonDialog.ShowDialog: a closed Toy Box was passed as owner. Picture and legacy-folder dialogs now use a separate hidden owner lasting until application shutdown. Dialog-opening failures show a recoverable message. Gameplay and cursor stealing are suspended during modal tools, with the previous pause state restored afterward.
+139 application checks pass, including all 110 pre-beta checks. New coverage includes delivery after live lists disappear, profile precedence, atomic note saving, external edits and deletion, locked notes, unchanged-editor close, watcher filtering and unavailable/recovered folders, legacy note totals/cancellation, background picture preparation and cache limits, rotating logs, diagnostics privacy, and secondary-instance startup/quit behavior.
 
-Foot-step duration previously changed between 0.1 and 0.2 seconds during an active stride. Crossing the speed threshold could move the interpolation backwards. Duration is now fixed at step start. Companion feet use the companion's effective scale; water transitions and paused size changes rebuild the rig. Deposited footprints snapshot position, angle, coating and scale and are rendered through bounded, pixel-aligned cached stamps.
+The delivery regression was run before the fix and reproduced a DivideByZeroException. Deliveries now snapshot their payload at task start rather than indexing live lists after leaving the desktop.
 
-The companion uses Canada goose colors and shares the appearance preference. The honk picture is centered text only. Existing stock art is recognized by its original SHA-256; atomic migration preserves edited/unrelated files and is safe to repeat.
+14 native Windows checks pass. They cover click-through/no-activate styles, offscreen return, interactive toy controls, full-assortment rendering, PNG/GIF windows and disposal, real file/folder dialog cancellation after repeated Toy Box cycles, recoverable dialog errors, quit during a picker, and cancellation during import progress.
 
-## Application regression suite
+The appearance sheet and native Toy Box rendering were visually inspected. Existing tests cover every shared appearance/size, Canada-goose proportions, swimming transitions, stationary footprint pixels across crop changes, exact five-second Escape timing/cancellation, simultaneous bursts, reduced motion, paused cleanup, and immediate quit. These controller/native checks do not claim physical mouse/keyboard testing of every route or driver-specific compositor behavior.
 
-**110 checks pass** in artifacts/desktop-self-test.txt. These include the original 71 checks for movement, toys, water, both geese's coatings, footprint caps/fading, cursor release, Escape timing, shutdown, content reload, settings recovery, legacy import and direct drag-controller behavior.
+## Performance
 
-Patch checks cover braking and acceleration across stride thresholds, sharp turns, companion foot spacing, paused size changes, stationary footprint pixel equality across moving/resized overlay crops, fading and cache disposal, water transitions, every appearance/size combination, countdown/surface handles at screen edges, PNG/JPEG/animated-GIF imports, corrupt/locked files, duplicate names, cancellation/temp cleanup, stock-art migration and preservation, and dialog-owner survival across repeated Toy Box disposal.
+The same benchmark harness was compiled against the original 0.3.1 binary and the beta. Each scenario uses 600 dual-layer frames at 1280×752, with warmup and the same seeded simulation. Full load has two geese, 16 objects, 256 replenished footprints, and editing handles. Measurements are local offscreen workloads, not universal hardware guarantees.
 
-A visual appearance sheet is saved as artifacts/companion-appearance-0.3.1.png. Native visual inspection confirmed the Canada goose palette and matching hats/scarves. Inspection also caught clipped text in the old honk asset; the replacement uses a centered pixel-sized font and fits the image.
+| Scenario | 0.3.1 p95 frame | Beta p95 frame | 0.3.1 CPU total | Beta CPU total |
+| --- | ---: | ---: | ---: | ---: |
+| One goose | 2.409 ms | 0.413 ms | 859 ms | 125 ms |
+| Two geese | 3.217 ms | 0.721 ms | 1,281 ms | 234 ms |
+| Full load | 35.667 ms | 21.680 ms | 16,406 ms | 8,359 ms |
 
-## Native dialogs, rendering and resource checks
+Full-load GDI/USER counts remain unchanged across each run. Gen-0 collections fall from six to two in the full-load comparison. Private memory grows from 38 to 44 MB for the baseline and 37 to 43 MB for the beta during this short run. Native buffers retain two extra GDI objects while active rather than recreating them every frame.
 
-**14 native checks pass** in artifacts/desktop-native-smoke.txt:
+The real 30-minute paced maximum-load soak is a release gate. Its final measured outcome will be recorded here before publication.
 
-- Existing overlay styles, native alpha presentation, offscreen return, separate toy interaction layer, native Toy Box/note controls and Windows audio backend.
-- Real Windows file pickers open and cancel with no Toy Box, after closing it, and after repeated disposal. The real legacy folder picker also cancels safely.
-- A simulated dialog-opening failure shows one recoverable message and restores gameplay. Immediate quit during a real file picker closes the picker, its owner and every overlay. Quit during import progress cancels its worker.
-- Maximum 256 footprints, 16 objects and both geese render for 180 dual-layer frames with GDI handles **110 → 110**. The standard 300-frame assortment remains **32 → 32**.
-- Twenty-four validated PNG/animated-GIF gift windows open/render/close with GDI handles **98 → 98**. PictureBox controls stop animation before their images and streams are disposed.
+## Installer and packages
 
-The native shutdown test exposed a repeated-close cancellation callback after disposal; that callback is guarded and the regression now passes. Native tests fail with a saved error report instead of waiting indefinitely at a framework exception dialog.
+18 installer checks pass against a rebuilt actual 0.3.1 baseline, using the same test AppId as the previous installer. They cover previous-directory reuse, running-app shutdown, updated legacy compatibility binary, renamed/optional shortcuts, preserved custom pictures/notes/settings, legacy/new single-instance behavior, fresh install, uninstall, and retained content. Test paths contain spaces and a simulated redirected Documents destination. The test removes its own shortcuts and installer registration.
 
-## Installer and archive checks
+Extracted portable/source checks and GitHub-hosted Windows validation are required before publication; final results are recorded in the release commit.
 
-**17 installer checks pass** in artifacts/installer-verification.txt. The test rebuilds the actual 0.3.0 source archive and its installer, installs it under a separate test identity, starts the old application, and upgrades to 0.3.1. Checks confirm graceful shutdown, the new executable version, preserved settings/custom notes, stock-art migration, preservation of a customized honk.png, shortcut options, uninstall cleanup, and retained content. A separate fresh 0.3.1 installation seeds text-only art with desktop/startup options off, then uninstalls cleanly.
+## Remaining verification limits
 
-Tests use isolated application/data directories containing spaces and a separate installer AppId on the current Windows host. Test shortcuts and installer registration are removed by the uninstaller. Source packages include research metadata and the embedded stock-art test fixture, while excluding compiler installations, research checkouts and test user data.
+A disposable Windows VM/Sandbox is unavailable. Tests use isolated paths and a separate product identity on this host. Actual Windows known-folder redirection, network-backed Documents, reboot/sign-in startup execution, Windows shutdown during a held native window drag, ARM64, mixed-DPI multi-monitor hardware, and display hot-plugging remain unverified. The current application uses one selected display. Native modal tests are an explicit local gate, not silently treated as passing in noninteractive CI.
 
-artifacts/package-verification.txt records extraction of the 0.3.1 portable ZIP into a path with spaces, executable version/hash verification, both test suites running from that extracted copy, source ZIP extraction/rebuild, and archive-content checks.
-
-## Remaining limits
-
-A disposable Windows VM/Windows Sandbox is unavailable on this host. Installer tests isolate paths and product identity on the current OS; actual Documents known-folder redirection, network-backed Documents, reboot/sign-in startup execution, Windows shutdown during a held native window drag, mixed-DPI multi-monitor hardware and display hot-plugging remain unverified.
-
-Drag-controller tests exercise the production code directly; end-to-end physical dragging of every item across the live desktop is not claimed. Escape timing uses the production controller rather than injecting Escape into the computer-use tool. The animation changes and raster invariants are covered by tests, but every intermittent compositor or driver-specific graphical issue cannot be ruled out. Audible quality has not been independently judged.
+The installer is unsigned. No automatic telemetry is sent. Test logs, fixtures generated during runs, profile paths, and local user content are excluded from release packages and Git. Historical 0.3.1 evidence is preserved separately in docs.

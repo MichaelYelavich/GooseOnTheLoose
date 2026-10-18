@@ -1,0 +1,28 @@
+name: Bug or performance problem
+description: Report a crash, graphical glitch, unexpected behavior, or resource problem.
+title: '[Bug] '
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: What happened, and how can we reproduce it?
+      description: Include the expected result and whether it happens repeatedly.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Game version and installation type
+      placeholder: Beta Release 1, installer or portable
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Desktop setup and relevant options
+      description: Windows version, display scaling, goose count, toys, appearance, and pause/reduced-motion settings.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Optional diagnostics or screenshot
+      description: Your content > Copy diagnostics gives a summary without custom notes or pictures. Review screenshots and logs for personal information before sharing.

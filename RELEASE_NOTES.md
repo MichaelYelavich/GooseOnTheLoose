@@ -1,13 +1,28 @@
-# Desktop Goose 2 — 0.3.1
+# Goose on the Loose — Beta Release 1
 
-Released 18 October 2026. Install over 0.3.0; preferences, notes, custom pictures, and behavior presets are preserved.
+**0.4.0-beta.1**, the first public beta and the next iteration after Desktop Goose 2 0.3.1. Windows 11, .NET Framework 4.8. This is a prerelease.
 
-- **Canada goose companion:** black head and neck, white cheeks, brown-grey body, dark beak and feet. Both geese now wear your selected scarf or sunhat, including during the reduced-motion dismissal.
-- **Import crash fixed:** picture and legacy-folder dialogs no longer depend on an optional Toy Box that may have been closed. Errors show a recoverable explanation instead of shutting down the goose.
-- **Safer picture imports:** PNG, JPEG, and all animated GIF frames are decoded before publication. Imports run in the background, can be cancelled, preserve duplicate filenames, and summarize skipped files. Existing 8 MB/8192-pixel limits remain; animations have a 500-frame/128-million-decoded-pixel limit.
-- **Feet stabilized:** a speed change cannot alter the duration of an already active step. Water transitions rebuild the foot rig, and companion feet use its actual smaller scale.
-- **Footprints stabilized:** landing position, angle, and size are retained. Cached, pixel-aligned stamps keep stationary prints steady while the overlay moves; changing goose size affects new prints only. Expiration, clearing, and quitting release cached images.
-- **Text-only honk picture:** removed the decorative goose to avoid confusion with a second desktop goose. Upgrade migration replaces only exact original stock images, including renamed copies. Edited and unrelated pictures are preserved.
-- **Small fixes:** water editing handles and the Escape countdown remain within the selected display; modal content tools release the cursor and restore the previous pause state; import cancellation handles repeated close notifications safely.
+## Improvements
 
-The goose remains a desktop toy with optional native tools. No settings format change or new setup screen is required. See VALIDATION.md for regression results and hardware/clean-VM verification limits.
+- New name, with the same desktop-first geese, shared outfits, Toy Box, water, footprints and optional native content tools.
+- Fix a crash when live content changes during an offscreen pickup. Deliveries capture their note and picture before leaving.
+- Validate and prepare picture deliveries off the interface thread, with bounded caching and cancellation during cleanup.
+- Save only edited notes, debounce saves, replace files atomically, and preserve external edits/deletions through conflict copies.
+- Recover from unavailable content folders and watcher failures, retain valid settings/presets, and scan live content on a worker.
+- Acquire single-instance ownership before initializing content. Secondary commands no longer reseed or migrate content.
+- Correct legacy note-import totals and cancellation.
+- Reuse native premultiplied rendering buffers and footprint drawing resources; hide the empty toy layer and skip unchanged paused frames.
+- Add explicit diagnostics and bounded local logs, with no automatic uploads.
+- Separate application, core, test and asset-generation projects; add pinned build dependencies, Windows CI, package checks, contribution docs and a roadmap.
+
+## Install or upgrade
+
+Download **GooseOnTheLoose-Beta1-Setup.exe**, or extract the entire **GooseOnTheLoose-Beta1-windows.zip** and run **GooseOnTheLoose.exe**. The source ZIP includes everything needed to build with the pinned SDK.
+
+The installer is per-user and retains the previous installation folder on upgrade. Existing Documents/DesktopGoose2 content stays in place; fresh profiles use Documents/GooseOnTheLoose. Settings and content formats remain compatible. Upgrade-only compatibility executables keep old shortcuts working. Startup and desktop shortcuts remain optional and off by default. Uninstall retains custom content.
+
+## Known limits
+
+The installer is unsigned. The game currently uses one selected display. Hardware-specific mixed-DPI, display hot-plugging, actual redirected/network Documents, and reboot/sign-in startup execution remain unverified. Installer testing uses isolated paths and a separate product identity on the test host rather than a disposable VM. Native dialog tests are a local interactive release gate, separately reported from CI. Full evidence is in [VALIDATION.md](https://github.com/MichaelYelavich/GooseOnTheLoose/blob/main/VALIDATION.md).
+
+Personality and play are the next feature priorities, followed by multi-monitor support. Report reproducible glitches through GitHub's bug form; the tray's Copy diagnostics command provides a summary without notes or pictures.

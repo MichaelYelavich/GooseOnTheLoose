@@ -1,0 +1,60 @@
+name: Windows validation
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: false
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - name: Build and check formatting and regressions
+        shell: pwsh
+        run: ./tools/verify.ps1 -Format
+      - name: Install pinned Inno Setup compiler
+        shell: pwsh
+        run: ./tools/install-inno.ps1
+      - name: Package committed source and binaries
+        shell: pwsh
+        run: ./tools/package.ps1 -SkipBuild
+      - name: Verify real 0.3.1 upgrade and fresh install
+        shell: pwsh
+        run: ./tools/verify-installer.ps1
+      - name: Verify extracted portable and source packages
+        shell: pwsh
+        run: ./tools/verify-package.ps1
+      - name: Save test reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: windows-reports
+          path: .work/reports/*.txt
+          retention-days: 14
+      - name: Save verified release candidates
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-candidates
+          path: |
+            .work/release/*-Setup.exe
+            .work/release/*-windows.zip
+            .work/release/*-source.zip
+            .work/checksums.txt
+          retention-days: 14

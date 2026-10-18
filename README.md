@@ -1,18 +1,20 @@
-# Desktop Goose 2 · 0.3.1
+# Goose on the Loose — Beta Release 1
+
+[Download the beta](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.4.0-beta.1) · [Report a bug](https://github.com/MichaelYelavich/GooseOnTheLoose/issues/new/choose)
 
 An unofficial Windows 11 sequel to Samperson's Desktop Goose. The goose lives directly on your desktop: wandering, honking, fetching sticks, stealing the cursor when provoked, and dragging back ordinary note and picture windows. Its procedural shape and planted footsteps follow the original game. Original sound samples are included.
 
-## What changed in 0.3.1
+## What changed in this beta
 
-The companion now looks like a Canada goose, and both geese wear the selected scarf or sunhat. Fixed a crash when importing pictures after closing Toy Box, a stride-speed change that could reverse a foot mid-step, and made footprint rendering independent of moving overlay crops. Footprints retain their original size when goose size changes.
+This is the next iteration after Desktop Goose 2 0.3.1, now called **Goose on the Loose**. It keeps the desktop geese, toys, water and native tools, and focuses on reliability and performance.
 
-Picture imports validate every frame before publishing a complete file, run without freezing the desktop, support cancellation, and summarize skipped files once. Gameplay pauses during modal content tools and then returns to its previous state. The bundled honk picture is text-only; upgrades replace exact original copies while preserving custom art. Water handles and the dismissal countdown stay inside the selected display. Details: [RELEASE_NOTES.md](RELEASE_NOTES.md).
+Fixed a crash when content disappears during a delivery, made picture preparation asynchronous, added safer note saving with conflict copies, hardened content reload and startup, and reduced rendering allocations. Tests now run separately from the game. Repeatable builds, GitHub checks and release tooling support future updates. Details: [release notes](RELEASE_NOTES.md).
 
 ## Install and play
 
-Double-click **DesktopGoose2-Setup.exe**. It installs per-user under `%LOCALAPPDATA%\Programs\DesktopGoose2` and creates a Start menu shortcut. Desktop and Windows-startup shortcuts are optional and start unchecked. Administrator access is not required. Updates preserve settings and content. Uninstall removes the application and shortcuts while keeping your Documents content.
+Double-click **GooseOnTheLoose-Beta1-Setup.exe**. It installs per-user under `%LOCALAPPDATA%\Programs\GooseOnTheLoose` and creates a Start menu shortcut. Desktop and Windows-startup shortcuts are optional and start unchecked. Administrator access is not required. Updates preserve settings and content. Uninstall removes the application and shortcuts while keeping your Documents content.
 
-For a portable copy, extract the entire Windows ZIP and double-click **DesktopGoose2.exe**. Keep Assets and Packs alongside it. Windows 11's included .NET Framework is sufficient; no account, network connection, or extra runtime download is required.
+For a portable copy, extract the entire Windows ZIP and double-click **GooseOnTheLoose.exe**. Keep every extracted file and folder alongside it, including Goose.Core.dll. Windows 11's included .NET Framework is sufficient; no account, network connection, or extra runtime download is required.
 
 Right-click the goose tray icon for **Toy Box**, Play, Mischief, Pause, Quiet mode, Options, Your content, cleanup, and Quit. There is no required control window. Options includes a second goose, outfits, sizes, display selection, reduced motion, sound, and cursor-stealing preferences. Random cursor attacks start disabled; a provoked theft lasts at most 1.4 seconds.
 
@@ -52,12 +54,12 @@ Closing a delivered window can provoke the goose. Cleanup and shutdown never pro
 
 ## Your content
 
-The tray's **Your content** menu offers **Import Pictures**, **Edit Notes**, **Open Content Folder**, **Import Legacy Content Folder**, and **Reload content**.
+The tray's **Your content** menu includes **Copy diagnostics** and offers **Import Pictures**, **Edit Notes**, **Open Content Folder**, **Import Legacy Content Folder**, and **Reload content**.
 
-Windows' Documents known-folder location is used, including redirected Documents folders:
+Windows' Documents known-folder location is used. Existing DesktopGoose2 collections remain in their original folder; fresh profiles use:
 
 ```text
-Documents/DesktopGoose2/
+Documents/GooseOnTheLoose/
   settings.json
   Pictures/
   Notes/
@@ -65,7 +67,7 @@ Documents/DesktopGoose2/
   README.txt
 ```
 
-Import multiple PNG, JPEG, or GIF files at once, or copy them into Pictures. Each picture may be up to 8 MB and 8192 pixels per side. Animations are limited to 500 frames and 128 million decoded pixels. Notes are ordinary .txt files of up to 1000 characters; the small native editor creates and saves them. Files reload after a 650 ms save debounce. Incomplete pictures are skipped. Invalid behavior or settings files keep the last valid configuration.
+Import multiple PNG, JPEG, or GIF files at once, or copy them into Pictures. Each picture may be up to 8 MB and 8192 pixels per side. Animations are limited to 500 frames and 128 million decoded pixels. Notes are ordinary .txt files of up to 1000 characters; the small native editor creates them and saves changed text after a one-second pause. External edits produce a conflict copy instead of being overwritten. Files reload after a 650 ms save debounce. Incomplete pictures are skipped. Invalid behavior or settings files keep the last valid configuration.
 
 The behavior preset controls prank intervals, activity weights, toy approach/nudge speeds, trail length, and footprint lifetime. Its `_comment` field and README.txt explain editing; keep the file valid JSON. Scripted mods and original DLL mods are outside this version. Sound samples can be replaced in Assets/Sounds.
 
@@ -73,15 +75,22 @@ Existing `%LOCALAPPDATA%\DesktopGoose2\settings.json` is copied once if Document
 
 ## Build and verify
 
-Quit the goose, then run `powershell -NoProfile -File .\build.ps1` from the source package. Windows' bundled Framework compiler produces dist/DesktopGoose2.exe with no external runtime dependencies.
+Developers need PowerShell 7 and the exact .NET SDK in `global.json`. Players need no SDK. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
-`tools/verify.ps1` builds and runs simulation, content, shutdown, input-controller, and native rendering checks. Reports are under artifacts. `tools/package.ps1 -Compiler "path\to\ISCC.exe"` builds the installer with Inno Setup 6.7+ and creates portable/source ZIPs. [Inno Setup per-user installation documentation](https://jrsoftware.org/ishelp/topic_setup_privilegesrequired.htm).
+```powershell
+./build.ps1 -Locked
+./tools/verify.ps1 -Interactive -Format
+```
 
-`tools/verify-installer.ps1` tests a separate installer identity and isolated application/data folders on the current Windows host. It creates its own named test shortcuts and removes them during uninstall. It does not provide a disposable OS or change the real Documents known folder. It expects ISCC.exe under artifacts/build-tools/Inno Setup.
+Builds go to `dist`, and reports/staging go to `.work`. The shipped game contains no test runner. `tools/package.ps1` produces an installer, portable ZIP and committed-source ZIP; `tools/verify-installer.ps1` verifies a real 0.3.1 upgrade with isolated product/data paths. Inno Setup 6.7.3 is discovered through `INNO_COMPILER` or installed with `tools/install-inno.ps1`.
 
-Commands for the running instance: `--come`, `--peas`, `--ball`, `--fetch`, `--note`, `--image`, `--honk`, `--pause`, `--quiet`, `--menu`, `--quit`, `--toolbox`, `--content-folder`, `--reload`, and `--clear`. A second launch calls the existing goose. `--quit` waits for cleanup. `--seed-content` initializes missing content without gameplay. `--snapshot output.png` exports goose artwork. runtime.json contains local diagnostics.
+Commands for the running instance: `--come`, `--peas`, `--ball`, `--fetch`, `--note`, `--image`, `--honk`, `--pause`, `--quiet`, `--menu`, `--quit`, `--toolbox`, `--content-folder`, `--reload`, `--clear`, and `--diagnostics`. A second launch calls the existing goose. `--quit` waits for cleanup. `--seed-content` initializes missing content without gameplay. `--snapshot output.png` exports goose artwork.
 
-For isolated tests, `DESKTOPGOOSE2_DATA_DIR` overrides the data directory and gives the instance separate command events and a separate single-instance lock. Normal launches use Documents.
+**Your content > Copy diagnostics** copies a summary without custom content or paths. When no game is running, `--diagnostics` writes that summary to diagnostics.txt in the content folder. Error logs stay local and rotate across three files. There are no automatic uploads. runtime.json is enabled only for tests or with `GOOSE_DIAGNOSTICS=1`.
+
+For isolated tests, `DESKTOPGOOSE2_DATA_DIR` overrides the data directory and gives the instance separate command events and a separate single-instance lock. Normal launches use Documents. Old and renamed executable names share one instance after an upgrade.
+
+Beta limitations: unsigned installer; one selected display at a time; mixed-DPI/display hot-plugging, real Documents redirection, and startup after reboot require further hardware/environment testing. See [validation](VALIDATION.md) and the [roadmap](docs/ROADMAP.md).
 
 Research: [RESEARCH.md](RESEARCH.md). Test evidence and limits: [VALIDATION.md](VALIDATION.md). Sound sources: [Assets/Sounds/PROVENANCE.md](Assets/Sounds/PROVENANCE.md).
 
