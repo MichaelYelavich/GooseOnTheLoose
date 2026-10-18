@@ -53,12 +53,40 @@ namespace SecondHonk
                         throw new Exception("Stale async delivery reopened a window after quit.");
                     output.Add("PASS  Quit during picture preparation cancels the request and prevents stale windows reopening.");
                 }
+                var resizeWorld = new World(new SaveData { Sound = false, Mischief = false, Companion = true }, content, 42);
+                resizeWorld.Goose.Place(new V(350, 350));
+                resizeWorld.Friend.Place(new V(600, 350));
+                resizeWorld.Update(0);
+                using (var overlay = new DesktopOverlay(resizeWorld, new System.Drawing.Rectangle(-10000, -10000, 1280, 752)))
+                using (var toys = new DesktopOverlay(resizeWorld, new System.Drawing.Rectangle(-10000, -10000, 1280, 752), true))
+                using (var process = System.Diagnostics.Process.GetCurrentProcess())
+                {
+                    overlay.RenderFrame();
+                    toys.RenderFrame();
+                    if (toys.Visible)
+                        throw new Exception("Empty toy layer remained visible.");
+                    int before = GetGuiResources(process.Handle, 0);
+                    for (int i = 0; i < 240; i++)
+                    {
+                        resizeWorld.Friend.Place(new V(i % 2 == 0 ? 100 : 1100, 200 + i % 7 * 50));
+                        resizeWorld.Data.Scale = i % 3 == 0 ? 2 : 1;
+                        resizeWorld.Goose.FeetReady = false;
+                        resizeWorld.Update(0);
+                        overlay.RenderFrame();
+                    }
+                    int after = GetGuiResources(process.Handle, 0);
+                    if (after > before + 3)
+                        throw new Exception("Resizing native buffers leaked GDI resources.");
+                    output.Add("PASS  240 crop/scale buffer reallocations keep GDI resources bounded; empty toy overlays remain hidden.");
+                }
             }
             finally
             {
                 Store.Root = original;
             }
         }
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern int GetGuiResources(IntPtr process, int flags);
 
         public static void Run(Content content, Action<bool, string> check)
         {
@@ -229,6 +257,8 @@ namespace SecondHonk
                 {
                     check(quit.WaitForExit(6000) && quit.ExitCode == 0 && !Directory.Exists(root), "Quit without a running instance does not create or seed content");
                 }
+                Directory.CreateDirectory(root);
+                File.WriteAllText(Path.Combine(root, "settings.json"), "{\"Version\":2,\"Sound\":false,\"Mischief\":false,\"MouseSteal\":false,\"Hat\":\"None\",\"Scale\":1.5}");
 
                 using (var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true }))
                 {
