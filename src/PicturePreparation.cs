@@ -20,7 +20,7 @@ namespace SecondHonk
                 using (var drawing = Graphics.FromImage(first))
                     drawing.DrawImageUnscaled(Image, 0, 0);
             }
-            catch { Stream.Dispose(); throw; }
+            catch { Image?.Dispose(); Stream.Dispose(); throw; }
         }
         public void Dispose()
         {

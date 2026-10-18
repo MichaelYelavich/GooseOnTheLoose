@@ -467,6 +467,7 @@ namespace SecondHonk
                     output.Add("PASS  Windows media backend opened the original Desktop Goose honk clips.");
                 }
                 PatchTests.Native(content, output);
+                BetaTests.Native(content, output);
                 Environment.ExitCode = 0;
             }
             catch (Exception error) { output.Add("FAIL  " + error); Environment.ExitCode = 1; }
