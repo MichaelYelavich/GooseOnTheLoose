@@ -9,7 +9,7 @@ Install Git, PowerShell 7, and the exact .NET SDK in `global.json`. Players need
 
 `GooseOnTheLoose.slnx` contains the core simulation/configuration, Windows application, console regression runner, and build-only asset generator. Tests use isolated content and offscreen windows. Interactive checks open and cancel temporary Windows dialogs. Run them on an unlocked desktop.
 
-Use `dotnet format GooseOnTheLoose.slnx whitespace --no-restore` before committing. Warnings are errors; targeted reliability analyzers are configured in `.globalconfig`. Restore uses committed package lock files. Change dependency versions deliberately and review lock-file changes.
+Use `dotnet format GooseOnTheLoose.slnx whitespace --no-restore` before committing. Warnings are errors; targeted reliability analyzers are configured in `.editorconfig`. Restore uses committed package lock files. Change dependency versions deliberately and review lock-file changes.
 
 For installer work, run `./tools/install-inno.ps1`, or set `INNO_COMPILER` to Inno Setup 6.7.3's `ISCC.exe`. Then commit the intended source, run `./tools/package.ps1`, `./tools/verify-installer.ps1`, and `./tools/verify-package.ps1`. Installer upgrade tests need Git history containing the 0.3.1 baseline; an extracted source ZIP can build and run application checks without that history.
 

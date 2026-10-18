@@ -1,4 +1,0 @@
-is_global = true
-# Targeted reliability rules. Broader cleanup can be introduced without hiding warnings.
-dotnet_diagnostic.CA2012.severity = warning
-dotnet_diagnostic.CA2200.severity = warning

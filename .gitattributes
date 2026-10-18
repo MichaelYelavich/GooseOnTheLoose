@@ -1,6 +1,7 @@
 * text=auto
 *.cs text eol=lf
 *.ps1 text eol=lf
+*.manifest text eol=lf
 *.png binary
 *.mp3 binary
 *.wav binary
