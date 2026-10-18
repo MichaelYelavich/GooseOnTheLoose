@@ -8,8 +8,10 @@ namespace SecondHonk
 {
     public sealed class ContentPack
     {
-        public string name; public string[] notes;
+        public string name;
+        public string[] notes;
     }
+
     public sealed class Content
     {
         public readonly List<string> Notes = new List<string>(), Images = new List<string>(), Warnings = new List<string>();
@@ -17,6 +19,7 @@ namespace SecondHonk
         {
             Reload(directory);
         }
+
         public void Reload(string directory)
         {
             Notes.Clear();
@@ -33,7 +36,11 @@ namespace SecondHonk
                             throw new InvalidDataException("Expected a notes array (up to 100 entries)");
                         Notes.AddRange(pack.notes.Where(n => !String.IsNullOrWhiteSpace(n) && n.Length <= 1000));
                     }
-                    catch (Exception e) { Warnings.Add(Path.GetFileName(path) + ": " + e.Message); }
+                    catch (Exception e)
+                    {
+                        Warnings.Add(Path.GetFileName(path) + ": " + e.Message);
+                    }
+
             string texts = Path.Combine(directory, "Notes");
             if (Directory.Exists(texts))
                 foreach (string path in Directory.GetFiles(texts, "*.txt").OrderBy(x => x))
@@ -46,23 +53,43 @@ namespace SecondHonk
                                 Notes.Add(text);
                         }
                     }
-                    catch (Exception e) { Warnings.Add(Path.GetFileName(path) + ": " + e.Message); }
-            foreach (string name in new[] { "Pictures", "Images" })
+                    catch (Exception e)
+                    {
+                        Warnings.Add(Path.GetFileName(path) + ": " + e.Message);
+                    }
+
+            foreach (string name in new[]
+            {
+                "Pictures",
+                "Images"
+            }
+
+            )
             {
                 string images = Path.Combine(directory, name);
                 if (Directory.Exists(images))
                     foreach (string p in Directory.GetFiles(images).OrderBy(x => x))
                         try
                         {
-                            if (new[] { ".png", ".jpg", ".jpeg", ".gif" }.Contains(Path.GetExtension(p).ToLowerInvariant()) && new FileInfo(p).Length <= 8388608)
+                            if (new[]
+                            {
+                                ".png",
+                                ".jpg",
+                                ".jpeg",
+                                ".gif"
+                            }.Contains(Path.GetExtension(p).ToLowerInvariant()) && new FileInfo(p).Length <= 8388608)
                                 using (var image = System.Drawing.Image.FromFile(p))
                                 {
                                     if (image.Width <= 8192 && image.Height <= 8192)
                                         Images.Add(p);
                                 }
                         }
-                        catch (Exception e) { Warnings.Add(Path.GetFileName(p) + ": " + e.Message); }
+                        catch (Exception e)
+                        {
+                            Warnings.Add(Path.GetFileName(p) + ": " + e.Message);
+                        }
             }
+
             if (Notes.Count == 0)
                 Notes.Add("I have stolen this window.\r\nHonk.");
         }

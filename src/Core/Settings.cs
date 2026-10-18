@@ -13,6 +13,7 @@ namespace SecondHonk
         public string Hat = "None", Monitor = "";
         public float Scale = 1.5f;
     }
+
     public static class Store
     {
         public static string Root = ProfilePaths.Resolve(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
@@ -20,14 +21,25 @@ namespace SecondHonk
         public static SaveData Load()
         {
             string p = Path.Combine(Root, "settings.json");
-            foreach (string f in new[] { p, p + ".bak" })
+            foreach (string f in new[]
+            {
+                p,
+                p + ".bak"
+            }
+
+            )
                 if (File.Exists(f))
                     try
                     {
                         SaveData s = new JavaScriptSerializer().Deserialize<SaveData>(File.ReadAllText(f));
                         if (s == null || s.Version != 2)
                             throw new InvalidDataException("Unknown settings version");
-                        if (!new[] { "None", "Scarf", "Sunhat" }.Contains(s.Hat))
+                        if (!new[]
+                        {
+                            "None",
+                            "Scarf",
+                            "Sunhat"
+                        }.Contains(s.Hat))
                             s.Hat = "None";
                         if (float.IsNaN(s.Scale) || float.IsInfinity(s.Scale))
                             s.Scale = 1.5f;
@@ -36,9 +48,14 @@ namespace SecondHonk
                             Warning = "Recovered the previous settings backup.";
                         return s;
                     }
-                    catch (Exception) { Warning = "Settings could not be read. Defaults are in use; old settings were preserved."; }
+                    catch (Exception)
+                    {
+                        Warning = "Settings could not be read. Defaults are in use; old settings were preserved.";
+                    }
+
             return new SaveData();
         }
+
         public static bool Save(SaveData data)
         {
             try
@@ -52,7 +69,11 @@ namespace SecondHonk
                     File.Move(temp, p);
                 return true;
             }
-            catch (Exception e) { Warning = e.Message; return false; }
+            catch (Exception e)
+            {
+                Warning = e.Message;
+                return false;
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+
 namespace SecondHonk
 {
     // Never shown. Common dialogs need a live top-level owner, independent of optional tools.
@@ -13,6 +14,7 @@ namespace SecondHonk
             StartPosition = FormStartPosition.CenterScreen;
             var handle = Handle;
         }
+
         protected override bool ShowWithoutActivation
         {
             get
@@ -20,6 +22,7 @@ namespace SecondHonk
                 return true;
             }
         }
+
         protected override CreateParams CreateParams
         {
             get

@@ -20,7 +20,11 @@ namespace SecondHonk
                 return true;
             }
         }
-        public GooseWindow(string note, string imagePath) : this(note, ReadPicture(imagePath)) { }
+
+        public GooseWindow(string note, string imagePath) : this(note, ReadPicture(imagePath))
+        {
+        }
+
         static PreparedPicture ReadPicture(string path)
         {
             if (String.IsNullOrEmpty(path))
@@ -29,8 +33,13 @@ namespace SecondHonk
             {
                 return new PreparedPicture(Pictures.ReadValidated(path, System.Threading.CancellationToken.None));
             }
-            catch (Exception error) { Program.Log(error); return null; }
+            catch (Exception error)
+            {
+                Program.Log(error);
+                return null;
+            }
         }
+
         internal GooseWindow(string note, PreparedPicture picture)
         {
             prepared = picture;
@@ -47,16 +56,25 @@ namespace SecondHonk
                 ClientSize = new Size(360, 280);
                 Controls.Add(new PictureBox { Image = prepared.Image, SizeMode = PictureBoxSizeMode.Zoom, Dock = DockStyle.Fill, BackColor = Color.White });
             }
+
             if (prepared == null)
                 Controls.Add(new TextBox { Multiline = true, ReadOnly = true, BorderStyle = BorderStyle.None, Dock = DockStyle.Fill, Text = note.Replace("\r\n", "\n").Replace("\n", "\r\n"), Font = new Font("Consolas", 12), BackColor = Color.White, ForeColor = Color.Black, ScrollBars = ScrollBars.Vertical });
         }
+
         protected override void Dispose(bool disposing)
         {
             try
             {
                 base.Dispose(disposing);
             }
-            finally { if (disposing && prepared != null) { prepared.Dispose(); prepared = null; } }
+            finally
+            {
+                if (disposing && prepared != null)
+                {
+                    prepared.Dispose();
+                    prepared = null;
+                }
+            }
         }
     }
 }

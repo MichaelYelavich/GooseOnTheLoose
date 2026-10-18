@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+
 namespace SecondHonk
 {
     // The editor owns the original text. An external change produces a new file,
@@ -30,9 +31,14 @@ namespace SecondHonk
                     else
                         File.Replace(temp, path, null);
                 }
+
                 return destination;
             }
-            finally { if (File.Exists(temp)) File.Delete(temp); }
+            finally
+            {
+                if (File.Exists(temp))
+                    File.Delete(temp);
+            }
         }
     }
 }

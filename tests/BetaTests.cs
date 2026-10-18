@@ -1,6 +1,7 @@
 using System.Linq;
 using System;
 using System.IO;
+
 namespace SecondHonk
 {
     static class BetaTests
@@ -26,6 +27,7 @@ namespace SecondHonk
                         System.Windows.Forms.Application.DoEvents();
                         System.Threading.Thread.Sleep(10);
                     }
+
                     if (!System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>().OfType<GooseWindow>().Any())
                         throw new Exception("Async picture delivery did not reach the UI thread.");
                     session.ExitThread();
@@ -33,6 +35,7 @@ namespace SecondHonk
                         throw new Exception("Async delivery shutdown left a window.");
                     output.Add("PASS  Background picture delivery transfers a prepared image to the native window and shuts down cleanly.");
                 }
+
                 using (var session = new DesktopSession(new SaveData { Sound = false, Mischief = false }, new Content(Store.Root), "", true))
                 {
                     session.World.DeliveryText = "Cancelled gift";
@@ -45,13 +48,18 @@ namespace SecondHonk
                         System.Windows.Forms.Application.DoEvents();
                         System.Threading.Thread.Sleep(10);
                     }
+
                     if (System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>().Any())
                         throw new Exception("Stale async delivery reopened a window after quit.");
                     output.Add("PASS  Quit during picture preparation cancels the request and prevents stale windows reopening.");
                 }
             }
-            finally { Store.Root = original; }
+            finally
+            {
+                Store.Root = original;
+            }
         }
+
         public static void Run(Content content, Action<bool, string> check)
         {
             var local = new Content(Path.Combine(Store.Root, "empty"));
@@ -62,9 +70,7 @@ namespace SecondHonk
             local.Notes.Clear();
             for (int i = 0; i < 1200; i++)
                 world.Update(1f / 60);
-            check(world.Deliveries == 1 && world.DeliveryImage == "vanishing.png" && world.DeliveryText.Length > 0,
-                "Delivery snapshots its payload before live content disappears");
-
+            check(world.Deliveries == 1 && world.DeliveryImage == "vanishing.png" && world.DeliveryText.Length > 0, "Delivery snapshots its payload before live content disappears");
             string documents = Path.Combine(Store.Root, "Documents probe");
             Directory.CreateDirectory(documents);
             check(ProfilePaths.Resolve(documents) == Path.Combine(documents, "GooseOnTheLoose"), "Fresh profiles use the new Documents folder");
@@ -93,13 +99,18 @@ namespace SecondHonk
                 {
                     AtomicNotes.Save(note, "locked", "overwrite", out conflict);
                 }
-                catch (IOException) { blocked = true; }
+                catch (IOException)
+                {
+                    blocked = true;
+                }
+
             check(blocked && File.ReadAllText(note) == "locked" && !Directory.GetFiles(Path.Combine(Store.Root, "Notes"), "*.tmp").Any(), "Locked-note failures preserve the file and leave no temporary files");
             using (var editor = new NoteEditor())
             {
                 File.WriteAllText(note, "external change while editor open");
                 editor.Close();
             }
+
             check(File.ReadAllText(note) == "external change while editor open", "Closing an unchanged note editor cannot overwrite an external edit");
             using (var editor = new NoteEditor())
             {
@@ -114,9 +125,11 @@ namespace SecondHonk
                     list.SelectedItem = list.Items.Cast<string>().First(n => n != "Atomic.txt");
                     check((string)list.SelectedItem == "Atomic.txt" && text.Text == "Unsaved local change", "A failed note save keeps the original selection and unsaved text");
                 }
+
                 editor.Close();
                 check(File.ReadAllText(note) == "Unsaved local change", "A failed note save can be retried after the file is unlocked");
             }
+
             check(!ContentMonitor.IgnoredEvent(null) && ContentMonitor.IgnoredEvent("error.log.2") && ContentMonitor.IgnoredEvent("runtime.json.tmp"), "Watcher handles missing names and ignores diagnostic and temporary writes");
             var contentWorld = new World(new SaveData(), new Content(Store.Root), 42);
             using (var monitor = new ContentMonitor(contentWorld))
@@ -131,6 +144,7 @@ namespace SecondHonk
                 monitor.Reload();
                 check(contentWorld.Content.Notes.Contains("Recovered folder"), "Content reload recovers when an unavailable folder returns");
             }
+
             string imports = Path.Combine(Store.Root, "legacy-count");
             Directory.CreateDirectory(imports);
             File.WriteAllText(Path.Combine(imports, "one.txt"), "A note");
@@ -142,6 +156,7 @@ namespace SecondHonk
                 cancel.Cancel();
                 check(UserContent.ImportLegacyFolder(imports, cancel.Token).Imported == 0, "Cancelled legacy imports do not publish notes");
             }
+
             string picture = Path.Combine(Store.Root, "Pictures", "honk.png");
             using (var preparation = new PicturePreparation())
             {
@@ -152,6 +167,7 @@ namespace SecondHonk
                     using (var prepared = preparation.Prepare(path, System.Threading.CancellationToken.None).GetAwaiter().GetResult())
                         check(prepared.Image.Width > 0, "Background picture preparation fully decodes picture " + i);
                 }
+
                 check(preparation.CachedBytes <= 16777216 && preparation.CachedPictures == 4, "Validated-picture cache respects its count and memory budgets");
                 using (var cancel = new System.Threading.CancellationTokenSource())
                 {
@@ -163,12 +179,18 @@ namespace SecondHonk
                         {
                         }
                     }
-                    catch (OperationCanceledException) { cancelled = true; }
+                    catch (OperationCanceledException)
+                    {
+                        cancelled = true;
+                    }
+
                     check(cancelled, "Picture preparation observes cancellation before publishing a window");
                 }
+
                 preparation.Dispose();
                 check(preparation.CachedBytes == 0, "Shutdown releases the validated-picture cache");
             }
+
             string summary = Diagnostics.Summary();
             check(!summary.Contains(Store.Root) && !summary.Contains("external change"), "Explicit diagnostics exclude content and profile paths");
             string log = Path.Combine(Store.Root, "error.log");
@@ -179,6 +201,7 @@ namespace SecondHonk
                 if (i < 2)
                     File.WriteAllText(log, new string('x', 1048576));
             }
+
             check(File.Exists(log + ".1") && File.Exists(log + ".2") && !File.Exists(log + ".3"), "Logs rotate within the three-file budget");
             StartupChecks(check);
             var dragWorld = new World(new SaveData { Sound = false }, content, 42);
@@ -194,6 +217,7 @@ namespace SecondHonk
                 check(invalidations >= 3 && ball.Pos.X == 450, "Dragging toys while paused invalidates the overlay without advancing gameplay");
             }
         }
+
         static void StartupChecks(Action<bool, string> check)
         {
             string executable = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GooseOnTheLoose.exe"), root = Path.Combine(Store.Root, "secondary-instance");
@@ -205,6 +229,7 @@ namespace SecondHonk
                 {
                     check(quit.WaitForExit(6000) && quit.ExitCode == 0 && !Directory.Exists(root), "Quit without a running instance does not create or seed content");
                 }
+
                 using (var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true }))
                 {
                     try
@@ -217,11 +242,21 @@ namespace SecondHonk
                         using (var command = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(executable, "--honk") { UseShellExecute = false, CreateNoWindow = true }))
                             check(command.WaitForExit(6000) && command.ExitCode == 0 && !File.Exists(marker), "Secondary commands signal the instance without reseeding its profile");
                     }
-                    finally { using (var quit = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(executable, "--quit") { UseShellExecute = false, CreateNoWindow = true })) quit.WaitForExit(6000); if (!process.WaitForExit(6000)) process.Kill(); }
+                    finally
+                    {
+                        using (var quit = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(executable, "--quit") { UseShellExecute = false, CreateNoWindow = true }))
+                            quit.WaitForExit(6000);
+                        if (!process.WaitForExit(6000))
+                            process.Kill();
+                    }
+
                     check(process.HasExited, "Immediate CLI quit removes the isolated application's overlays and process");
                 }
             }
-            finally { Environment.SetEnvironmentVariable("DESKTOPGOOSE2_DATA_DIR", previous); }
+            finally
+            {
+                Environment.SetEnvironmentVariable("DESKTOPGOOSE2_DATA_DIR", previous);
+            }
         }
     }
 }

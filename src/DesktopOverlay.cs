@@ -17,12 +17,19 @@ namespace SecondHonk
         readonly FootprintRenderer footprints = new FootprintRenderer();
         readonly bool interaction;
         internal event Action Changed;
-        DesktopObject dragging; V dragOffset, lastPointer; DateTime lastDrag; bool resizing;
+        DesktopObject dragging;
+        V dragOffset, lastPointer;
+        DateTime lastDrag;
+        bool resizing;
         public Rectangle Area
         {
             get; private set;
         }
-        public DesktopOverlay(World world, Rectangle area) : this(world, area, false) { }
+
+        public DesktopOverlay(World world, Rectangle area) : this(world, area, false)
+        {
+        }
+
         public DesktopOverlay(World world, Rectangle area, bool interactive)
         {
             this.world = world;
@@ -35,6 +42,7 @@ namespace SecondHonk
             TopMost = true;
             Text = interactive ? "Goose on the Loose — toys" : "Goose on the Loose — overlay";
         }
+
         protected override CreateParams CreateParams
         {
             get
@@ -46,6 +54,7 @@ namespace SecondHonk
                 return p;
             }
         }
+
         protected override bool ShowWithoutActivation
         {
             get
@@ -53,10 +62,12 @@ namespace SecondHonk
                 return true;
             }
         }
+
         Rectangle Around(V p, int radius)
         {
             return new Rectangle((int)p.X - radius, (int)p.Y - radius, radius * 2, radius * 2);
         }
+
         public void RenderFrame()
         {
             if (IsDisposed)
@@ -74,6 +85,7 @@ namespace SecondHonk
                 if (world.DismissRemaining > 0)
                     crop = Rectangle.Union(crop, Around(Art.DismissPosition(world) + new V(36, 18), 55));
             }
+
             foreach (var o in world.Objects)
             {
                 if (interaction && o.Surface && !world.Editing)
@@ -83,6 +95,7 @@ namespace SecondHonk
                 var bounds = new Rectangle((int)(o.Pos.X - o.Size.X / 2 - 28), (int)(o.Pos.Y - o.Size.Y / 2 - 28), (int)o.Size.X + 56, (int)o.Size.Y + 56);
                 crop = crop.IsEmpty ? bounds : Rectangle.Union(crop, bounds);
             }
+
             crop.Intersect(new Rectangle(0, 0, Area.Width, Area.Height));
             if (crop.Width <= 0 || crop.Height <= 0)
             {
@@ -90,6 +103,7 @@ namespace SecondHonk
                     Hide();
                 return;
             }
+
             int width = Math.Max(64, ((crop.Width + 63) / 64) * 64), height = Math.Max(64, ((crop.Height + 63) / 64) * 64);
             if (buffer == null || buffer.Frame.Width != width || buffer.Frame.Height != height)
             {
@@ -97,6 +111,7 @@ namespace SecondHonk
                     buffer.Dispose();
                 buffer = new LayeredBuffer(width, height);
             }
+
             using (var g = Graphics.FromImage(buffer.Frame))
             {
                 g.Clear(Color.Transparent);
@@ -106,21 +121,25 @@ namespace SecondHonk
                 else
                     Art.Scene(g, world, footprints);
             }
+
             buffer.Present(Handle, new Point(Area.X + crop.X, Area.Y + crop.Y));
             if (!Visible)
                 Show();
         }
+
         V Pointer()
         {
             Point p = Cursor.Position;
             return new V(p.X - Area.X, p.Y - Area.Y);
         }
+
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
             if (e.Button == MouseButtons.Left)
                 BeginDrag(Pointer());
         }
+
         internal bool BeginDrag(V p)
         {
             if (!interaction || world.Exploding)
@@ -135,6 +154,7 @@ namespace SecondHonk
                     Changed?.Invoke();
                     return true;
                 }
+
                 bool resize = world.Editing && o.Surface && V.Distance(p, o.Pos + o.Size / 2) < 13;
                 bool move = world.Editing && o.Surface && V.Distance(p, o.Pos - new V(0, o.Size.Y / 2)) < 14;
                 if ((!o.Surface && o.Contains(p)) || move || resize)
@@ -154,13 +174,16 @@ namespace SecondHonk
                     return true;
                 }
             }
+
             return false;
         }
+
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
             MoveDrag(Pointer(), (float)(DateTime.UtcNow - lastDrag).TotalSeconds);
         }
+
         internal void MoveDrag(V p, float dt)
         {
             if (dragging == null)
@@ -178,21 +201,25 @@ namespace SecondHonk
                 if (dragging.Velocity.Length > 900)
                     dragging.Velocity = dragging.Velocity.Unit * 900;
             }
+
             lastPointer = p;
             lastDrag = DateTime.UtcNow;
             Changed?.Invoke();
         }
+
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
             ReleaseDrag();
         }
+
         protected override void OnMouseCaptureChanged(EventArgs e)
         {
             base.OnMouseCaptureChanged(e);
             if (!Capture)
                 ReleaseDrag();
         }
+
         public void ReleaseDrag()
         {
             if (dragging != null)
@@ -203,8 +230,10 @@ namespace SecondHonk
                 dragging = null;
                 Changed?.Invoke();
             }
+
             Capture = false;
         }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -217,6 +246,7 @@ namespace SecondHonk
                     buffer = null;
                 }
             }
+
             base.Dispose(disposing);
         }
     }

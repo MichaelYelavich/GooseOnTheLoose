@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+
 namespace SecondHonk
 {
     static class Program
@@ -13,18 +14,29 @@ namespace SecondHonk
                 return Environment.GetEnvironmentVariable("GOOSE_REPORT_DIR") ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".work", "reports");
             }
         }
+
         [STAThread]
         static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.ThreadException += (s, e) => { Log(e.Exception); Application.Exit(); };
+            Application.ThreadException += (s, e) =>
+            {
+                Log(e.Exception);
+                Application.Exit();
+            };
             try
             {
                 Run(args);
             }
-            catch (Exception error) { Log(error); Environment.ExitCode = 1; MessageBox.Show("The goose could not start. Check that your content folder is available and try again.", "Goose on the Loose", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+            catch (Exception error)
+            {
+                Log(error);
+                Environment.ExitCode = 1;
+                MessageBox.Show("The goose could not start. Check that your content folder is available and try again.", "Goose on the Loose", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
+
         static void Run(string[] args)
         {
             string command = args.Length > 0 ? args[0].TrimStart('-') : "";
@@ -33,11 +45,13 @@ namespace SecondHonk
                 Snapshot(args);
                 return;
             }
+
             if (command.Length > 0 && command != "seed-content" && CommandRegistry.Find(command) == null)
             {
                 Environment.ExitCode = 2;
                 return;
             }
+
             bool created;
             using (var mutex = new Mutex(true, CommandRegistry.Prefix + "Instance", out created))
             {
@@ -59,18 +73,28 @@ namespace SecondHonk
                                 {
                                     acquired = mutex.WaitOne(5000);
                                 }
-                                catch (AbandonedMutexException) { acquired = true; }
+                                catch (AbandonedMutexException)
+                                {
+                                    acquired = true;
+                                }
+
                                 if (acquired)
                                     mutex.ReleaseMutex();
                                 else
                                     Environment.ExitCode = 2;
                             }
+
                             return;
                         }
-                        catch (WaitHandleCannotBeOpenedException) { Thread.Sleep(50); }
+                        catch (WaitHandleCannotBeOpenedException)
+                        {
+                            Thread.Sleep(50);
+                        }
+
                     Environment.ExitCode = 2;
                     return;
                 }
+
                 if (command == "quit")
                     return;
                 UserContent.Initialize(AppDomain.CurrentDomain.BaseDirectory);
@@ -81,10 +105,12 @@ namespace SecondHonk
                     File.WriteAllText(Path.Combine(Store.Root, "diagnostics.txt"), Diagnostics.Summary());
                     return;
                 }
+
                 using (var session = new DesktopSession(Store.Load(), new Content(Store.Root), command))
                     Application.Run(session);
             }
         }
+
         static void Snapshot(string[] args)
         {
             string target = args.Length > 1 ? Path.GetFullPath(args[1]) : Path.Combine(ArtifactsFolder, "goose.png");
@@ -100,9 +126,11 @@ namespace SecondHonk
                     drawing.Clear(System.Drawing.Color.Transparent);
                     Art.Scene(drawing, world);
                 }
+
                 bitmap.Save(target, System.Drawing.Imaging.ImageFormat.Png);
             }
         }
+
         internal static void Log(Exception error)
         {
             Diagnostics.Log(error);

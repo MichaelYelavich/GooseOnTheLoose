@@ -6,11 +6,13 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+
 namespace SecondHonk
 {
     public static class Performance
     {
-        [DllImport("user32.dll")] static extern int GetGuiResources(IntPtr process, int flags);
+        [DllImport("user32.dll")]
+        static extern int GetGuiResources(IntPtr process, int flags);
         [STAThread]
         public static void Main(string[] args)
         {
@@ -22,7 +24,14 @@ namespace SecondHonk
             try
             {
                 var content = new Content(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Packs"));
-                foreach (string scenario in new[] { "idle", "pair", "full" })
+                foreach (string scenario in new[]
+                {
+                    "idle",
+                    "pair",
+                    "full"
+                }
+
+                )
                 {
                     var world = new World(new SaveData { Sound = false, Mischief = false, Companion = scenario != "idle" }, content, 42);
                     world.Goose.Place(new V(450, 350));
@@ -34,6 +43,7 @@ namespace SecondHonk
                             world.PlaceObject((ToyKind)(i % 7), new V(130 + i % 5 * 200, 150 + i / 5 * 150));
                         Populate(world);
                     }
+
                     using (var overlay = new DesktopOverlay(world, new Rectangle(-10000, -10000, 1280, 752)))
                     using (var toys = new DesktopOverlay(world, new Rectangle(-10000, -10000, 1280, 752), true))
                     using (var process = Process.GetCurrentProcess())
@@ -46,6 +56,7 @@ namespace SecondHonk
                             overlay.RenderFrame();
                             toys.RenderFrame();
                         }
+
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
                         process.Refresh();
@@ -80,15 +91,18 @@ namespace SecondHonk
                                         window.Close();
                                     }
                                 }
+
                                 if (frames % 900 == 0)
                                 {
                                     process.Refresh();
                                     File.AppendAllText(output + ".progress", total.Elapsed.ToString() + " frames=" + frames + " GDI=" + GetGuiResources(process.Handle, 0) + " USER=" + GetGuiResources(process.Handle, 1) + " privateMB=" + process.PrivateMemorySize64 / 1048576 + Environment.NewLine);
                                 }
+
                                 Application.DoEvents();
                                 Thread.Sleep(Math.Max(1, 33 - (int)frame.ElapsedMilliseconds));
                             }
-                        } while (minutes > 0 && scenario == "full" ? total.Elapsed.TotalMinutes < minutes : frames < 600);
+                        }
+                        while (minutes > 0 && scenario == "full" ? total.Elapsed.TotalMinutes < minutes : frames < 600);
                         total.Stop();
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
@@ -99,13 +113,21 @@ namespace SecondHonk
                         if (finalGdi > gdi + 4 || finalUser > user + 4)
                             throw new Exception("Unbounded native resource growth in " + scenario);
                     }
+
                     File.WriteAllLines(output, lines);
                 }
+
                 lines.Add("PASS: finite simulation and bounded resources.");
             }
-            catch (Exception error) { lines.Add("FAIL: " + error); Environment.ExitCode = 1; }
+            catch (Exception error)
+            {
+                lines.Add("FAIL: " + error);
+                Environment.ExitCode = 1;
+            }
+
             File.WriteAllLines(output, lines);
         }
+
         static void Populate(World world)
         {
             world.Marks.Clear();

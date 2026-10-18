@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+
 namespace SecondHonk
 {
     public static class Pictures
@@ -32,6 +33,7 @@ namespace SecondHonk
                     at += n;
                 }
             }
+
             using (var stream = new MemoryStream(bytes))
             using (var image = Image.FromStream(stream, true, true))
             {
@@ -52,15 +54,18 @@ namespace SecondHonk
                         g.DrawImageUnscaled(image, 0, 0);
                     }
             }
+
             cancel.ThrowIfCancellationRequested();
             return bytes;
         }
+
         public static string Hash(string path)
         {
             using (var sha = System.Security.Cryptography.SHA256.Create())
             using (var stream = File.OpenRead(path))
                 return BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "");
         }
+
         public static string Publish(string original, byte[] bytes, string folder, CancellationToken cancel)
         {
             Directory.CreateDirectory(folder);
@@ -74,8 +79,10 @@ namespace SecondHonk
                         cancel.ThrowIfCancellationRequested();
                         output.Write(bytes, at, Math.Min(65536, bytes.Length - at));
                     }
+
                     output.Flush(true);
                 }
+
                 string name = Path.GetFileNameWithoutExtension(original), extension = Path.GetExtension(original);
                 for (int i = 1; ; i++)
                 {
@@ -86,11 +93,26 @@ namespace SecondHonk
                         File.Move(temp, dest);
                         return dest;
                     }
-                    catch (IOException) { if (!File.Exists(dest)) throw; }
+                    catch (IOException)
+                    {
+                        if (!File.Exists(dest))
+                            throw;
+                    }
                 }
             }
-            finally { if (File.Exists(temp)) try { File.Delete(temp); } catch (IOException) { } }
+            finally
+            {
+                if (File.Exists(temp))
+                    try
+                    {
+                        File.Delete(temp);
+                    }
+                    catch (IOException)
+                    {
+                    }
+            }
         }
+
         public static ImportResult Import(string[] paths, CancellationToken cancel)
         {
             var result = new ImportResult();
@@ -104,26 +126,48 @@ namespace SecondHonk
                     Publish(path, bytes, Path.Combine(Store.Root, "Pictures"), cancel);
                     result.Imported++;
                 }
-                catch (OperationCanceledException) { break; }
-                catch (Exception e) { result.Errors.Add(Path.GetFileName(path) + ": " + e.Message); Program.Log(e); }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (Exception e)
+                {
+                    result.Errors.Add(Path.GetFileName(path) + ": " + e.Message);
+                    Program.Log(e);
+                }
             }
+
             return result;
         }
+
         public static void MigrateStock(string bundled, string root)
         {
             try
             {
                 MigrateStockCore(bundled, root);
             }
-            catch (IOException error) { Program.Log(error); }
-            catch (UnauthorizedAccessException error) { Program.Log(error); }
+            catch (IOException error)
+            {
+                Program.Log(error);
+            }
+            catch (UnauthorizedAccessException error)
+            {
+                Program.Log(error);
+            }
         }
+
         static void MigrateStockCore(string bundled, string root)
         {
             string replacement = Path.Combine(bundled, "Packs", "Images", "honk.png");
             if (!File.Exists(replacement) || Hash(replacement) == OldStockHash)
                 return;
-            foreach (string folder in new[] { Path.Combine(root, "Pictures"), Path.Combine(root, "Images") })
+            foreach (string folder in new[]
+            {
+                Path.Combine(root, "Pictures"),
+                Path.Combine(root, "Images")
+            }
+
+            )
                 if (Directory.Exists(folder))
                     foreach (string file in Directory.GetFiles(folder, "*.png"))
                         try
@@ -137,23 +181,39 @@ namespace SecondHonk
                                 if (Hash(file) == OldStockHash)
                                     File.Replace(temp, file, null);
                             }
-                            finally { if (File.Exists(temp)) File.Delete(temp); }
+                            finally
+                            {
+                                if (File.Exists(temp))
+                                    File.Delete(temp);
+                            }
                         }
-                        catch (Exception e) { Program.Log(e); }
+                        catch (Exception e)
+                        {
+                            Program.Log(e);
+                        }
         }
     }
+
     public sealed class ImportResult
     {
-        public int Imported; public readonly List<string> Errors = new List<string>();
+        public int Imported;
+        public readonly List<string> Errors = new List<string>();
     }
+
     public sealed class ImportProgress : Form
     {
         bool disposed;
-        readonly CancellationTokenSource cancel = new CancellationTokenSource(); readonly System.Windows.Forms.Timer poll = new System.Windows.Forms.Timer { Interval = 50 }; readonly Task<ImportResult> task;
+        readonly CancellationTokenSource cancel = new CancellationTokenSource();
+        readonly System.Windows.Forms.Timer poll = new System.Windows.Forms.Timer
+        {
+            Interval = 50
+        };
+        readonly Task<ImportResult> task;
         public ImportResult Result
         {
             get; private set;
         }
+
         public ImportProgress(Func<CancellationToken, ImportResult> import)
         {
             Text = "Import pictures";
@@ -163,14 +223,41 @@ namespace SecondHonk
             StartPosition = FormStartPosition.CenterScreen;
             ClientSize = new Size(320, 110);
             Controls.Add(new Label { Text = "Checking and importing your pictures…", Dock = DockStyle.Top, Height = 48, TextAlign = ContentAlignment.MiddleCenter });
-            var button = new Button { Text = "Cancel", Width = 90, Location = new Point(115, 65) };
+            var button = new Button
+            {
+                Text = "Cancel",
+                Width = 90,
+                Location = new Point(115, 65)
+            };
             button.Click += (s, e) => Close();
             Controls.Add(button);
             task = Task.Factory.StartNew(() => import(cancel.Token), cancel.Token, TaskCreationOptions.None, TaskScheduler.Default);
-            poll.Tick += (s, e) => { if (!task.IsCompleted) return; if (task.Status == TaskStatus.RanToCompletion) Result = task.Result; else if (task.Exception != null) { Program.Log(task.Exception); Result = new ImportResult(); Result.Errors.Add(task.Exception.GetBaseException().Message); } Close(); };
+            poll.Tick += (s, e) =>
+            {
+                if (!task.IsCompleted)
+                    return;
+                if (task.Status == TaskStatus.RanToCompletion)
+                    Result = task.Result;
+                else if (task.Exception != null)
+                {
+                    Program.Log(task.Exception);
+                    Result = new ImportResult();
+                    Result.Errors.Add(task.Exception.GetBaseException().Message);
+                }
+
+                Close();
+            };
             Shown += (s, e) => poll.Start();
-            FormClosing += (s, e) => { if (!disposed) { cancel.Cancel(); poll.Stop(); } };
+            FormClosing += (s, e) =>
+            {
+                if (!disposed)
+                {
+                    cancel.Cancel();
+                    poll.Stop();
+                }
+            };
         }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && !disposed)
@@ -181,8 +268,13 @@ namespace SecondHonk
                 if (task.IsCompleted)
                     cancel.Dispose();
                 else
-                    task.ContinueWith(t => { var ignored = t.Exception; cancel.Dispose(); });
+                    task.ContinueWith(t =>
+                    {
+                        var ignored = t.Exception;
+                        cancel.Dispose();
+                    });
             }
+
             base.Dispose(disposing);
         }
     }

@@ -14,7 +14,8 @@ namespace SecondHonk
         public readonly List<Mark> Marks = new List<Mark>();
         public readonly List<DesktopObject> Objects = new List<DesktopObject>();
         public Behavior Behavior = new Behavior();
-        public bool Editing, Exploding; public float DismissRemaining, ExplosionTime;
+        public bool Editing, Exploding;
+        public float DismissRemaining, ExplosionTime;
         DesktopObject ball, stick;
         readonly Random random;
         readonly Queue<int> deck = new Queue<int>();
@@ -28,42 +29,49 @@ namespace SecondHonk
             {
                 return ball == null ? new V() : ball.Pos;
             }
+
             set
             {
                 if (ball != null)
                     ball.Pos = value;
             }
         }
+
         public V BallVelocity
         {
             get
             {
                 return ball == null ? new V() : ball.Velocity;
             }
+
             set
             {
                 if (ball != null)
                     ball.Velocity = value;
             }
         }
+
         public V StickPos
         {
             get
             {
                 return stick == null ? new V() : stick.Pos;
             }
+
             set
             {
                 if (stick != null)
                     stick.Pos = value;
             }
         }
+
         public bool BallVisible
         {
             get
             {
                 return ball != null && Objects.Contains(ball);
             }
+
             set
             {
                 if (!value && ball != null)
@@ -73,12 +81,14 @@ namespace SecondHonk
                 }
             }
         }
+
         public bool StickVisible
         {
             get
             {
                 return stick != null && Objects.Contains(stick);
             }
+
             set
             {
                 if (!value && stick != null)
@@ -88,18 +98,21 @@ namespace SecondHonk
                 }
             }
         }
+
         public bool CarryingStick
         {
             get
             {
                 return stick != null && stick.Carried;
             }
+
             set
             {
                 if (stick != null)
                     stick.Carried = value;
             }
         }
+
         public bool Paused;
         public int DeliveryStage, DeliverySide, Meals, Fetches, Kicks, Deliveries;
         public string DeliveryText = "", DeliveryImage = "";
@@ -111,10 +124,12 @@ namespace SecondHonk
                 return Data.Scale;
             }
         }
+
         public float GooseScale(Goose goose)
         {
             return Scale * (goose == Friend ? .85f : 1);
         }
+
         public bool HoldingCursor
         {
             get
@@ -122,22 +137,26 @@ namespace SecondHonk
                 return GrabRemaining > 0 && !Paused && !Data.Quiet && Data.MouseSteal;
             }
         }
+
         public World(SaveData data, Content content, int seed)
         {
             Data = data;
             Content = content;
             random = new Random(seed);
         }
+
         public void ApplyBehavior(Behavior behavior)
         {
             Behavior = behavior;
             deck.Clear();
             autoIn = behavior.PrankMinSeconds;
         }
+
         public V Clamp(V p)
         {
             return new V(Math.Max(35 * Scale, Math.Min(Width - 35 * Scale, p.X)), Math.Max(65 * Scale, Math.Min(Height - 20 * Scale, p.Y)));
         }
+
         public V ConstrainObject(DesktopObject o, V p)
         {
             if (!o.Surface)
@@ -146,12 +165,14 @@ namespace SecondHonk
             float x = o.Size.X / 2 + 14, y = o.Size.Y / 2 + 14;
             return new V(Math.Max(x, Math.Min(Width - x, p.X)), Math.Max(y, Math.Min(Height - y, p.Y)));
         }
+
         public V Beak(Goose g)
         {
             float extend = g.Neck;
             V forward = V.Direction(g.HeadDirection);
             return g.Pos + new V(0, -14 * Scale) + V.Direction(g.Direction) * (15 * Scale) + forward * ((11 + 13 * extend) * Scale) + new V(0, -(20 - 10 * extend) * Scale);
         }
+
         public void Resize(float width, float height)
         {
             Width = Math.Max(400, width);
@@ -161,6 +182,7 @@ namespace SecondHonk
             ClearProps();
             Cancel();
         }
+
         public void ClearProps()
         {
             Cancel();
@@ -171,11 +193,13 @@ namespace SecondHonk
             Goose.TrailRemaining = Friend.TrailRemaining = 0;
             Goose.Swimming = Friend.Swimming = false;
         }
+
         public void Cancel()
         {
             SetTask(Activity.Wander);
             GrabRemaining = 0;
         }
+
         public void SetTask(Activity task)
         {
             if (task != Activity.Fetch && task != Activity.Return)
@@ -187,11 +211,17 @@ namespace SecondHonk
             if (task == Activity.Deliver)
                 DeliveryStage = 0;
         }
+
         public DesktopObject PlaceObject(ToyKind kind, V p)
         {
             if (Objects.Count >= 16)
                 return null;
-            var o = new DesktopObject { Kind = kind, Pos = Clamp(p), Size = kind == ToyKind.Pond ? new V(230, 145) : kind == ToyKind.Puddle || kind == ToyKind.Mud ? new V(135, 80) : kind == ToyKind.Stick ? new V(48, 24) : kind == ToyKind.Peas ? new V(32, 28) : kind == ToyKind.Duck ? new V(48, 36) : new V(36, 36) };
+            var o = new DesktopObject
+            {
+                Kind = kind,
+                Pos = Clamp(p),
+                Size = kind == ToyKind.Pond ? new V(230, 145) : kind == ToyKind.Puddle || kind == ToyKind.Mud ? new V(135, 80) : kind == ToyKind.Stick ? new V(48, 24) : kind == ToyKind.Peas ? new V(32, 28) : kind == ToyKind.Duck ? new V(48, 36) : new V(36, 36)
+            };
             o.Pos = ConstrainObject(o, p);
             Objects.Add(o);
             if (kind == ToyKind.Ball)
@@ -199,6 +229,7 @@ namespace SecondHonk
                 ball = o;
                 SetTask(Activity.Ball);
             }
+
             if (kind == ToyKind.Stick)
             {
                 foreach (var existing in Objects)
@@ -207,13 +238,16 @@ namespace SecondHonk
                 ReturnPoint = Goose.Pos;
                 SetTask(Activity.Fetch);
             }
+
             if (kind == ToyKind.Peas)
             {
                 GrabRemaining = 0;
                 SetTask(Activity.Eat);
             }
+
             return o;
         }
+
         public void RemoveObject(DesktopObject o)
         {
             Objects.Remove(o);
@@ -225,11 +259,13 @@ namespace SecondHonk
                 Cancel();
             }
         }
+
         public void Honk()
         {
             if (!Data.Quiet && Data.Sound && Honked != null)
                 Honked();
         }
+
         public void Chase(V p)
         {
             if (Paused || Data.Quiet)
@@ -239,6 +275,7 @@ namespace SecondHonk
             SetTask(Activity.Chase);
             Honk();
         }
+
         public void Follow(V p)
         {
             if (Paused)
@@ -247,6 +284,7 @@ namespace SecondHonk
             GrabRemaining = 0;
             SetTask(Activity.Follow);
         }
+
         public void Call(V p)
         {
             GrabRemaining = 0;
@@ -254,12 +292,14 @@ namespace SecondHonk
             Pointer = Clamp(p);
             Honk();
         }
+
         public void Feed(V p)
         {
             if (Paused)
                 return;
             PlaceObject(ToyKind.Peas, p);
         }
+
         public void ThrowBall(V p)
         {
             if (Paused || Data.Quiet)
@@ -271,6 +311,7 @@ namespace SecondHonk
             ballCooldown = 0;
             Honk();
         }
+
         public void Fetch(V p)
         {
             if (Paused || Data.Quiet)
@@ -279,6 +320,7 @@ namespace SecondHonk
             PlaceObject(ToyKind.Stick, p);
             Honk();
         }
+
         public void MakeMud()
         {
             if (Paused || Data.Quiet)
@@ -290,6 +332,7 @@ namespace SecondHonk
             Goose.Target = RandomPoint();
             Honk();
         }
+
         public void Deliver(bool image)
         {
             if (Paused || Data.Quiet)
@@ -302,22 +345,32 @@ namespace SecondHonk
             Goose.Target = new V(DeliverySide < 0 ? -75 * Scale : Width + 75 * Scale, Math.Max(120 * Scale, Math.Min(Height - 100 * Scale, Goose.Pos.Y)));
             Honk();
         }
+
         public void SetQuiet(bool quiet)
         {
             Data.Quiet = quiet;
             QuietRemaining = 0;
             Cancel();
         }
+
         V RandomPoint()
         {
             return Clamp(new V((float)random.NextDouble() * Width, (float)random.NextDouble() * Height));
         }
+
         void ChooseActivity()
         {
             if (deck.Count == 0)
             {
                 var choices = new List<int>();
-                int[] weights = { Behavior.MudWeight, Behavior.NoteWeight, Behavior.PictureWeight, Behavior.ChaseWeight, Behavior.ToyWeight };
+                int[] weights =
+                {
+                    Behavior.MudWeight,
+                    Behavior.NoteWeight,
+                    Behavior.PictureWeight,
+                    Behavior.ChaseWeight,
+                    Behavior.ToyWeight
+                };
                 for (int k = 0; k < weights.Length; k++)
                     for (int j = 0; j < weights[k]; j++)
                         choices.Add(k);
@@ -330,6 +383,7 @@ namespace SecondHonk
                     choices.RemoveAt(i);
                 }
             }
+
             switch (deck.Dequeue())
             {
                 case 0:
@@ -354,9 +408,11 @@ namespace SecondHonk
                         SetTask(Activity.Follow);
                         Pointer = Friend.Pos;
                     }
+
                     break;
             }
         }
+
         void Move(Goose g, V target, float speed, float dt, bool offscreen)
         {
             UpdateSurface(g);
@@ -385,6 +441,7 @@ namespace SecondHonk
             g.Neck += (neckTarget - g.Neck) * Math.Min(1, dt * 6);
             SolveFeet(g, dt);
         }
+
         void SolveFeet(Goose g, float dt)
         {
             float scale = GooseScale(g);
@@ -396,6 +453,7 @@ namespace SecondHonk
                 g.FeetReady = true;
                 g.MovingFoot = -1;
             }
+
             if (g.Swimming)
             {
                 g.LeftFoot = leftHome;
@@ -403,6 +461,7 @@ namespace SecondHonk
                 g.MovingFoot = -1;
                 return;
             }
+
             if (g.MovingFoot < 0)
             {
                 float ld = V.Distance(g.LeftFoot, leftHome), rd = V.Distance(g.RightFoot, rightHome);
@@ -433,6 +492,7 @@ namespace SecondHonk
                 }
             }
         }
+
         public void UpdateSurface(Goose g)
         {
             var surface = Objects.LastOrDefault(o => o.Surface && o.Contains(g.Pos));
@@ -442,6 +502,7 @@ namespace SecondHonk
                 g.FeetReady = false;
                 g.MovingFoot = -1;
             }
+
             g.Swimming = swimming;
             if (surface != null)
             {
@@ -449,6 +510,7 @@ namespace SecondHonk
                 g.TrailRemaining = Behavior.TrailSteps;
             }
         }
+
         public void LandFoot(Goose g, V foot)
         {
             if (g.Swimming || Objects.Any(o => o.Surface && o.Contains(foot)))
@@ -463,6 +525,7 @@ namespace SecondHonk
                     Marks.RemoveAt(0);
             }
         }
+
         public void AdvanceQuiet(float elapsed)
         {
             if (QuietRemaining > 0)
@@ -472,6 +535,7 @@ namespace SecondHonk
                     SetQuiet(false);
             }
         }
+
         public void Update(float dt)
         {
             dt = Math.Max(0, Math.Min(.1f, dt));
@@ -487,6 +551,7 @@ namespace SecondHonk
                     SolveFeet(Friend, 0);
                 return;
             }
+
             Time += dt;
             Goose.TaskTime += dt;
             ballCooldown -= dt;
@@ -496,6 +561,7 @@ namespace SecondHonk
                 if (Marks[i].Age >= Behavior.FootprintSeconds)
                     Marks.RemoveAt(i);
             }
+
             if (Marks.Count > 256)
                 Marks.RemoveRange(0, Marks.Count - 256);
             foreach (var o in Objects)
@@ -515,7 +581,18 @@ namespace SecondHonk
                 if (o.Kind == ToyKind.Duck && Objects.Any(s => s.Kind == ToyKind.Pond && s.Contains(o.Pos)))
                     o.Pos += new V((float)Math.Sin(Time + o.Pos.Y) * dt * 4, 0);
                 if (o.Kind == ToyKind.Ball || o.Kind == ToyKind.Duck)
-                    foreach (var g in Data.Companion ? new[] { Goose, Friend } : new[] { Goose })
+                    foreach (var g in Data.Companion ? new[]
+                    {
+                        Goose,
+                        Friend
+                    }
+
+                    : new[]
+                    {
+                        Goose
+                    }
+
+                    )
                         if (o.Cooldown <= 0 && V.Distance(g.Pos, o.Pos) < 35 * Scale)
                         {
                             o.Velocity = (o.Pos - g.Pos).Unit * Behavior.NudgeSpeed * Scale;
@@ -523,6 +600,7 @@ namespace SecondHonk
                             Kicks++;
                         }
             }
+
             if (Data.Quiet && (Goose.Task == Activity.Chase || Goose.Task == Activity.Mud || Goose.Task == Activity.Deliver || Goose.Task == Activity.Fetch || Goose.Task == Activity.Ball))
                 Cancel();
             V target = Goose.Pos;
@@ -540,6 +618,7 @@ namespace SecondHonk
                             Goose.Wait = 1 + (float)random.NextDouble() * 2;
                         }
                     }
+
                     target = Goose.Target;
                     autoIn -= dt;
                     napIn -= dt;
@@ -551,12 +630,14 @@ namespace SecondHonk
                         if (Data.Mischief && !Data.Quiet)
                             ChooseActivity();
                     }
+
                     if (napIn <= 0)
                     {
                         napIn = 180 + random.Next(180);
                         SetTask(Activity.Sleep);
                         Goose.Target = new V(Width - 70 * Scale, Height - 30 * Scale);
                     }
+
                     break;
                 case Activity.Chase:
                     speed = 400;
@@ -577,9 +658,11 @@ namespace SecondHonk
                             if (Data.Sound && CursorCaught != null)
                                 CursorCaught();
                         }
+
                         if (Goose.TaskTime > 9)
                             Cancel();
                     }
+
                     break;
                 case Activity.Follow:
                     target = Pointer;
@@ -594,6 +677,7 @@ namespace SecondHonk
                         Cancel();
                         break;
                     }
+
                     target = pea.Pos;
                     speed = Behavior.ToyApproachSpeed;
                     if (V.Distance(Beak(Goose), target) < 35 * Scale || V.Distance(Goose.Pos, target) < 12 * Scale)
@@ -601,6 +685,7 @@ namespace SecondHonk
                         Objects.Remove(pea);
                         Meals++;
                     }
+
                     break;
                 case Activity.Ball:
                     if (!BallVisible || Goose.TaskTime > 18)
@@ -609,6 +694,7 @@ namespace SecondHonk
                         Cancel();
                         break;
                     }
+
                     if (ball.Dragging)
                         break;
                     target = Clamp(BallPos - (Beak(Goose) - Goose.Pos));
@@ -620,6 +706,7 @@ namespace SecondHonk
                         Kicks++;
                         Honk();
                     }
+
                     break;
                 case Activity.Fetch:
                     if (!StickVisible)
@@ -627,6 +714,7 @@ namespace SecondHonk
                         Cancel();
                         break;
                     }
+
                     target = StickPos;
                     speed = Behavior.ToyApproachSpeed;
                     if (!stick.Dragging && V.Distance(Goose.Pos, target) < 25 * Scale)
@@ -634,6 +722,7 @@ namespace SecondHonk
                         CarryingStick = true;
                         SetTask(Activity.Return);
                     }
+
                     break;
                 case Activity.Return:
                     target = ReturnPoint;
@@ -648,9 +737,11 @@ namespace SecondHonk
                             stick.Carried = false;
                             stick.Pos = Clamp(Beak(Goose));
                         }
+
                         Cancel();
                         Honk();
                     }
+
                     break;
                 case Activity.Mud:
                     target = Goose.Target;
@@ -686,6 +777,7 @@ namespace SecondHonk
                         if (DeliveryCompleted != null)
                             DeliveryCompleted();
                     }
+
                     break;
                 case Activity.Sleep:
                     target = Goose.Target;
@@ -694,6 +786,7 @@ namespace SecondHonk
                         Cancel();
                     break;
             }
+
             Move(Goose, target, speed, dt, offscreen);
             if (Data.Companion)
             {
@@ -708,6 +801,7 @@ namespace SecondHonk
                         Meals++;
                     }
                 }
+
                 if (V.Distance(Friend.Pos, follow) < 18 * Scale)
                     follow = Friend.Pos;
                 Move(Friend, follow, 140, dt, false);

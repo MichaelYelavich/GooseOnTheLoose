@@ -5,11 +5,80 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Threading;
 using System.Windows.Forms;
+
 namespace SecondHonk
 {
     static class PatchTests
     {
-        static readonly byte[] gifBytes = { 71, 73, 70, 56, 57, 97, 1, 0, 1, 0, 128, 0, 0, 0, 0, 0, 255, 255, 255, 33, 249, 4, 0, 10, 0, 0, 0, 44, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 2, 68, 1, 0, 33, 249, 4, 0, 10, 0, 0, 0, 44, 0, 0, 0, 0, 1, 0, 1, 0, 0, 2, 2, 76, 1, 0, 59 };
+        static readonly byte[] gifBytes =
+        {
+            71,
+            73,
+            70,
+            56,
+            57,
+            97,
+            1,
+            0,
+            1,
+            0,
+            128,
+            0,
+            0,
+            0,
+            0,
+            0,
+            255,
+            255,
+            255,
+            33,
+            249,
+            4,
+            0,
+            10,
+            0,
+            0,
+            0,
+            44,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            2,
+            2,
+            68,
+            1,
+            0,
+            33,
+            249,
+            4,
+            0,
+            10,
+            0,
+            0,
+            0,
+            44,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            2,
+            2,
+            76,
+            1,
+            0,
+            59
+        };
         static World New(Content content)
         {
             var w = new World(new SaveData { Mischief = false, Sound = false, Scale = 1, Companion = true }, content, 42);
@@ -18,10 +87,12 @@ namespace SecondHonk
             w.Update(0);
             return w;
         }
+
         static float Ease(float t)
         {
             return t < .5f ? 4 * t * t * t : 1 - (float)Math.Pow(-2 * t + 2, 3) / 2;
         }
+
         public static void Run(Content content, Action<bool, string> check)
         {
             var w = New(content);
@@ -61,6 +132,7 @@ namespace SecondHonk
                     throw new Exception("Step reversed in a sharp turn");
                 previous = distance;
             }
+
             check(true, "Sharp turns retain monotonic step progress");
             w = New(content);
             w.Data.Scale = 2;
@@ -93,6 +165,7 @@ namespace SecondHonk
                     cg.TranslateTransform(-137, -91);
                     cache.Draw(cg, w);
                 }
+
                 bool equal = true;
                 for (int y = 320; y < 385; y++)
                     for (int x = 418; x < 483; x++)
@@ -106,6 +179,7 @@ namespace SecondHonk
                     cache.Draw(fg, w);
                     check(faded.GetPixel(450, 351).A < full.GetPixel(450, 351).A, "Cached footprint fading changes opacity without moving the print");
                 }
+
                 w.Marks.Clear();
                 using (var fg = Graphics.FromImage(full))
                     cache.Draw(fg, w);
@@ -118,6 +192,7 @@ namespace SecondHonk
                 cache.Dispose();
                 check(cache.Count == 0, "Overlay shutdown disposes all cached footprint images");
             }
+
             w = New(content);
             w.Goose.MovingFoot = 0;
             w.PlaceObject(ToyKind.Pond, w.Goose.Pos);
@@ -143,6 +218,7 @@ namespace SecondHonk
                 layer.ReleaseDrag();
                 check(edgeWater.Pos.X + edgeWater.Size.X / 2 <= w.Width - 14 && edgeWater.Pos.Y + edgeWater.Size.Y / 2 <= w.Height - 14, "Resizing water keeps its resize handle inside the working area");
             }
+
             string folder = Path.Combine(Store.Root, "import-fixtures");
             Directory.CreateDirectory(folder);
             string png = Path.Combine(folder, "picture.png"), jpeg = Path.Combine(folder, "photo.jpg"), gif = Path.Combine(folder, "animation.gif"), bad = Path.Combine(folder, "incomplete.png"), locked = Path.Combine(folder, "locked.png");
@@ -154,6 +230,7 @@ namespace SecondHonk
                 image.Save(jpeg, ImageFormat.Jpeg);
                 image.Save(locked, ImageFormat.Png);
             }
+
             // Two 1x1 frames, with black and white pixels and a 0.1-second delay.
             File.WriteAllBytes(gif, gifBytes);
             File.WriteAllText(bad, "not a complete picture");
@@ -175,9 +252,13 @@ namespace SecondHonk
                     Pictures.Publish(png, File.ReadAllBytes(png), Path.Combine(Store.Root, "Pictures"), cancel.Token);
                     throw new Exception("Cancelled publish completed");
                 }
-                catch (OperationCanceledException) { }
+                catch (OperationCanceledException)
+                {
+                }
+
                 check(!Directory.GetFiles(Path.Combine(Store.Root, "Pictures"), "*.tmp").Any(), "Cancellation cleans temporary files before publication");
             }
+
             string stock = Path.Combine(Store.Root, "Pictures", "renamed-stock.png"), custom = Path.Combine(Store.Root, "Pictures", "honk.png");
             File.Copy(StockFixture(), stock);
             File.Copy(png, custom, true);
@@ -197,14 +278,18 @@ namespace SecondHonk
                         box.Close();
                     session.RunModalTool(o => check(o.Handle == owner && !o.IsDisposed && session.World.Paused, "Import owner survives a closed Toy Box, cycle " + (i + 1)));
                 }
+
                 check(!session.World.Paused && !session.IsExited, "Modal tools restore the previous running state");
                 session.World.Paused = true;
-                session.RunModalTool(o => { });
+                session.RunModalTool(o =>
+                {
+                });
                 check(session.World.Paused, "Modal tools preserve an already paused state");
                 session.RunModalTool(o => session.ExitThread());
                 check(session.IsExited && session.DialogOwner.IsDisposed && !Application.OpenForms.Cast<Form>().Any(), "Immediate quit during a content tool disposes the stable dialog owner and all overlays");
             }
         }
+
         static string StockFixture()
         {
             string path = Path.Combine(Store.Root, "import-fixtures", "stock-honk-0.3.png");
@@ -213,7 +298,9 @@ namespace SecondHonk
                 input.CopyTo(output);
             return path;
         }
-        [System.Runtime.InteropServices.DllImport("user32.dll")] static extern int GetGuiResources(IntPtr process, int flags);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern int GetGuiResources(IntPtr process, int flags);
         public static void Native(Content content, System.Collections.Generic.List<string> output)
         {
             string original = Store.Root;
@@ -230,39 +317,142 @@ namespace SecondHonk
                         foreach (var box in System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>().OfType<ToyBox>().ToArray())
                             box.Close();
                         DialogResult result = DialogResult.None;
-                        session.RunModalTool(owner => { using (var picker = new OpenFileDialog { Title = "Goose import regression check", InitialDirectory = Store.Root, Filter = "Pictures|*.png;*.jpg;*.gif" }) using (var close = new System.Windows.Forms.Timer { Interval = 250 }) { close.Tick += (s, e) => SecondHonk.Native.CloseOwnedDialogs(owner.Handle); close.Start(); result = picker.ShowDialog(owner); close.Stop(); } });
+                        session.RunModalTool(owner =>
+                        {
+                            using (var picker = new OpenFileDialog
+                            {
+                                Title = "Goose import regression check",
+                                InitialDirectory = Store.Root,
+                                Filter = "Pictures|*.png;*.jpg;*.gif"
+                            }
+
+                            )
+                            using (var close = new System.Windows.Forms.Timer
+                            {
+                                Interval = 250
+                            }
+
+                            )
+                            {
+                                close.Tick += (s, e) => SecondHonk.Native.CloseOwnedDialogs(owner.Handle);
+                                close.Start();
+                                result = picker.ShowDialog(owner);
+                                close.Stop();
+                            }
+                        });
                         if (result != DialogResult.Cancel || session.IsExited || session.World.Paused)
                             throw new Exception("Native file-dialog regression failed");
                     }
+
                     output.Add("PASS  Real Windows file picker opens and cancels with no Toy Box, a closed Toy Box, and a repeatedly closed Toy Box; gameplay resumes.");
                     DialogResult legacy = DialogResult.None;
-                    session.RunModalTool(owner => { using (var picker = new FolderBrowserDialog { Description = "Goose legacy import regression check", SelectedPath = Store.Root }) using (var close = new System.Windows.Forms.Timer { Interval = 250 }) { close.Tick += (s, e) => SecondHonk.Native.CloseOwnedDialogs(owner.Handle); close.Start(); legacy = picker.ShowDialog(owner); close.Stop(); } });
+                    session.RunModalTool(owner =>
+                    {
+                        using (var picker = new FolderBrowserDialog
+                        {
+                            Description = "Goose legacy import regression check",
+                            SelectedPath = Store.Root
+                        }
+
+                        )
+                        using (var close = new System.Windows.Forms.Timer
+                        {
+                            Interval = 250
+                        }
+
+                        )
+                        {
+                            close.Tick += (s, e) => SecondHonk.Native.CloseOwnedDialogs(owner.Handle);
+                            close.Start();
+                            legacy = picker.ShowDialog(owner);
+                            close.Stop();
+                        }
+                    });
                     if (legacy != DialogResult.Cancel || session.IsExited)
                         throw new Exception("Native legacy picker failed");
                     output.Add("PASS  Real legacy folder picker uses the stable owner and cancels without crashing.");
-                    using (var close = new System.Windows.Forms.Timer { Interval = 250 })
+                    using (var close = new System.Windows.Forms.Timer
+                    {
+                        Interval = 250
+                    }
+
+                    )
                     {
                         close.Tick += (s, e) => SecondHonk.Native.CloseOwnedDialogs(session.DialogOwner.Handle);
                         close.Start();
-                        session.RunModalTool(owner => { throw new IOException("Simulated file picker failure for regression testing."); });
+                        session.RunModalTool(owner =>
+                        {
+                            throw new IOException("Simulated file picker failure for regression testing.");
+                        });
                         close.Stop();
                     }
+
                     if (session.IsExited || session.World.Paused)
                         throw new Exception("Recoverable dialog error terminated gameplay");
                     output.Add("PASS  A dialog-opening failure shows one recoverable message and restores gameplay without exiting.");
-                    session.RunModalTool(owner => { using (var picker = new OpenFileDialog { Title = "Goose quit-during-import check", InitialDirectory = Store.Root }) using (var close = new System.Windows.Forms.Timer { Interval = 250 }) { close.Tick += (s, e) => { close.Stop(); session.ExitThread(); }; close.Start(); picker.ShowDialog(owner); } });
+                    session.RunModalTool(owner =>
+                    {
+                        using (var picker = new OpenFileDialog
+                        {
+                            Title = "Goose quit-during-import check",
+                            InitialDirectory = Store.Root
+                        }
+
+                        )
+                        using (var close = new System.Windows.Forms.Timer
+                        {
+                            Interval = 250
+                        }
+
+                        )
+                        {
+                            close.Tick += (s, e) =>
+                            {
+                                close.Stop();
+                                session.ExitThread();
+                            };
+                            close.Start();
+                            picker.ShowDialog(owner);
+                        }
+                    });
                     if (!session.IsExited || !session.DialogOwner.IsDisposed || Application.OpenForms.Cast<Form>().Any())
                         throw new Exception("Quit did not clean up the native file picker");
                     output.Add("PASS  Immediate quit during a real file picker closes its owner, picker and overlays.");
                 }
+
                 using (var finished = new ManualResetEvent(false))
                 using (var session = new DesktopSession(new SaveData { Sound = false }, new Content(Store.Root), "", true))
                 {
-                    session.RunModalTool(owner => { using (var progress = new ImportProgress(token => { while (!token.IsCancellationRequested) Thread.Sleep(10); finished.Set(); return new ImportResult(); })) using (var close = new System.Windows.Forms.Timer { Interval = 250 }) { close.Tick += (s, e) => { close.Stop(); session.ExitThread(); }; close.Start(); progress.ShowDialog(owner); } });
+                    session.RunModalTool(owner =>
+                    {
+                        using (var progress = new ImportProgress(token =>
+                        {
+                            while (!token.IsCancellationRequested)
+                                Thread.Sleep(10);
+                            finished.Set();
+                            return new ImportResult();
+                        }))
+                        using (var close = new System.Windows.Forms.Timer
+                        {
+                            Interval = 250
+                        }
+
+                        )
+                        {
+                            close.Tick += (s, e) =>
+                            {
+                                close.Stop();
+                                session.ExitThread();
+                            };
+                            close.Start();
+                            progress.ShowDialog(owner);
+                        }
+                    });
                     if (!session.IsExited || !finished.WaitOne(2000))
                         throw new Exception("Import worker did not cancel on quit");
                     output.Add("PASS  Quitting the import progress dialog cancels its worker and cleans up immediately.");
                 }
+
                 var w = New(content);
                 w.Editing = true;
                 for (int i = 0; i < 16; i++)
@@ -283,11 +473,13 @@ namespace SecondHonk
                         bg.RenderFrame();
                         toys.RenderFrame();
                     }
+
                     int after = GetGuiResources(System.Diagnostics.Process.GetCurrentProcess().Handle, 0);
                     if (after > before + 3)
                         throw new Exception("Max-footprint workload leaked GDI handles");
                     output.Add("PASS  Maximum 256 footprints, 16 objects and both geese render over 180 dual-layer frames; GDI " + before + " -> " + after + ".");
                 }
+
                 string picture = Path.Combine(Store.Root, "Pictures", "honk.png"), animation = Path.Combine(Store.Root, "Pictures", "animation.gif");
                 File.WriteAllBytes(animation, gifBytes);
                 int baseline = GetGuiResources(System.Diagnostics.Process.GetCurrentProcess().Handle, 0);
@@ -301,6 +493,7 @@ namespace SecondHonk
                             gift.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
                         gift.Close();
                     }
+
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 int final = GetGuiResources(System.Diagnostics.Process.GetCurrentProcess().Handle, 0);
@@ -308,8 +501,12 @@ namespace SecondHonk
                     throw new Exception("Repeated picture windows leaked GDI handles");
                 output.Add("PASS  24 validated PNG/animated-GIF windows open/render/close; GDI " + baseline + " -> " + final + ".");
             }
-            finally { Store.Root = original; }
+            finally
+            {
+                Store.Root = original;
+            }
         }
+
         static void Appearance(Content content, Action<bool, string> check)
         {
             using (var sheet = new Bitmap(1020, 720))
@@ -317,10 +514,24 @@ namespace SecondHonk
             {
                 sg.Clear(Color.FromArgb(229, 233, 224));
                 int row = 0;
-                foreach (float scale in new[] { 1f, 1.5f, 2f })
+                foreach (float scale in new[]
+                {
+                    1f,
+                    1.5f,
+                    2f
+                }
+
+                )
                 {
                     int column = 0;
-                    foreach (string hat in new[] { "None", "Scarf", "Sunhat" })
+                    foreach (string hat in new[]
+                    {
+                        "None",
+                        "Scarf",
+                        "Sunhat"
+                    }
+
+                    )
                     {
                         var w = New(content);
                         w.Data.Scale = scale;
@@ -345,6 +556,7 @@ namespace SecondHonk
                                     if (p.A > 100 && p.R > 200 && p.G > 170 && p.G < 210 && p.B > 100 && p.B < 160)
                                         gold++;
                                 }
+
                             check(dark > 20 && (hat != "Scarf" || red > 5) && (hat != "Sunhat" || gold > 20), "Canada companion and shared " + hat + " appearance render at scale " + scale);
                             sg.DrawImageUnscaled(cell, column * 340, row * 240);
                             using (var f = new Font("Segoe UI", 10))
@@ -356,10 +568,13 @@ namespace SecondHonk
                             using (var fg = Graphics.FromImage(fade))
                                 Art.Scene(fg, w);
                         }
+
                         column++;
                     }
+
                     row++;
                 }
+
                 sheet.Save(Path.Combine(Program.ArtifactsFolder, "companion-appearance-0.3.1.png"));
             }
         }

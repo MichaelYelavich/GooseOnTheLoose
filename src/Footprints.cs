@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Linq;
+
 namespace SecondHonk
 {
     // Stamps are rasterized once at landing size, independent of the moving overlay crop.
@@ -21,6 +22,7 @@ namespace SecondHonk
                 return stamps.Count;
             }
         }
+
         public void Draw(Graphics g, World world)
         {
             bool changed = world.Marks.Count != stamps.Count;
@@ -31,6 +33,7 @@ namespace SecondHonk
                         changed = true;
                         break;
                     }
+
             if (changed)
             {
                 alive.Clear();
@@ -46,6 +49,7 @@ namespace SecondHonk
                     stamps.Remove(old);
                 }
             }
+
             var state = g.Save();
             g.PixelOffsetMode = PixelOffsetMode.None;
             g.InterpolationMode = InterpolationMode.NearestNeighbor;
@@ -59,6 +63,7 @@ namespace SecondHonk
                         stamp = Create(mark);
                         stamps.Add(mark, stamp);
                     }
+
                     float fade = Math.Max(0, Math.Min(1, (world.Behavior.FootprintSeconds - mark.Age) / 2));
                     {
                         matrix.Matrix33 = fade;
@@ -67,8 +72,12 @@ namespace SecondHonk
                     }
                 }
             }
-            finally { g.Restore(state); }
+            finally
+            {
+                g.Restore(state);
+            }
         }
+
         static Bitmap Create(Mark mark)
         {
             var bitmap = new Bitmap(64, 64, PixelFormat.Format32bppPArgb);
@@ -87,8 +96,10 @@ namespace SecondHonk
                     g.FillEllipse(b, 2 * s, 2 * s, 3 * s, 3 * s);
                 }
             }
+
             return bitmap;
         }
+
         public void Dispose()
         {
             foreach (var stamp in stamps.Values)

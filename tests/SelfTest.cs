@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+
 namespace SecondHonk
 {
     static class SelfTest
@@ -16,6 +17,7 @@ namespace SecondHonk
                 throw new Exception(label);
             results.Add("PASS  " + label);
         }
+
         static World New(Content c)
         {
             var w = new World(new SaveData { Mischief = false, Scale = 1 }, c, 42);
@@ -24,11 +26,13 @@ namespace SecondHonk
             w.Update(0);
             return w;
         }
+
         static void Advance(World w, float seconds)
         {
             for (int i = 0; i < seconds * 60; i++)
                 w.Update(1f / 60);
         }
+
         public static void Run(Content content)
         {
             Directory.CreateDirectory(Program.ArtifactsFolder);
@@ -66,7 +70,11 @@ namespace SecondHonk
                 w = New(content);
                 int started = 0, finished = 0;
                 V windowStart = new V();
-                w.DeliveryStarted += () => { started++; windowStart = w.Goose.Pos; };
+                w.DeliveryStarted += () =>
+                {
+                    started++;
+                    windowStart = w.Goose.Pos;
+                };
                 w.DeliveryCompleted += () => finished++;
                 w.Deliver(false);
                 Advance(w, 18);
@@ -127,8 +135,14 @@ namespace SecondHonk
                     if (float.IsNaN(w.Goose.Pos.X) || float.IsInfinity(w.Goose.Pos.Y))
                         throw new Exception("Invalid simulation position");
                 }
+
                 Assert(w.Marks.Count <= 256, "Ten minutes of simulation maintain finite positions and bounded footprints");
-                var settings = new SaveData { Companion = true, Hat = "Scarf", Scale = 2 };
+                var settings = new SaveData
+                {
+                    Companion = true,
+                    Hat = "Scarf",
+                    Scale = 2
+                };
                 Assert(Store.Save(settings), "Initial settings save succeeds");
                 settings.Hat = "Sunhat";
                 Assert(Store.Save(settings) && Store.Load().Hat == "Sunhat", "Settings persist atomically");
@@ -148,16 +162,27 @@ namespace SecondHonk
                     Art.Scene(g, w);
                     Assert(bmp.GetPixel(10, 10).A == 0 && bmp.GetPixel((int)w.Goose.Pos.X, (int)w.Goose.Pos.Y - 14).A > 0, "Renderer draws the goose while leaving the desktop transparent");
                 }
+
                 Extended(content);
                 PatchTests.Run(content, Assert);
                 BetaTests.Run(content, Assert);
                 results.Add("\nAll " + results.Count + " desktop checks passed. Windows " + Environment.OSVersion.Version + ".");
                 Environment.ExitCode = 0;
             }
-            catch (Exception error) { results.Add("FAIL  " + error); Environment.ExitCode = 1; }
-            finally { Store.Root = root; File.WriteAllLines(Path.Combine(Program.ArtifactsFolder, "desktop-self-test.txt"), results); }
+            catch (Exception error)
+            {
+                results.Add("FAIL  " + error);
+                Environment.ExitCode = 1;
+            }
+            finally
+            {
+                Store.Root = root;
+                File.WriteAllLines(Path.Combine(Program.ArtifactsFolder, "desktop-self-test.txt"), results);
+            }
         }
-        [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr h, int index);
+
+        [DllImport("user32.dll")]
+        static extern int GetWindowLong(IntPtr h, int index);
         static void Extended(Content content)
         {
             var w = New(content);
@@ -201,6 +226,7 @@ namespace SecondHonk
                 w.LandFoot(w.Goose, w.Goose.Pos);
                 w.LandFoot(w.Friend, w.Friend.Pos);
             }
+
             Assert(w.Marks.Count == 40 && w.Goose.TrailRemaining == 0 && w.Friend.TrailRemaining == 0, "Both geese leave exactly twenty coated foot landings");
             w.LandFoot(w.Goose, w.Goose.Pos);
             Assert(w.Marks.Count == 40, "Dry feet stop producing footprints");
@@ -210,6 +236,7 @@ namespace SecondHonk
                 w.Goose.TrailRemaining = 1;
                 w.LandFoot(w.Goose, w.Goose.Pos);
             }
+
             Assert(w.Marks.Count == 256, "All geese share the 256-print cap");
             w.Objects.Clear();
             w.Goose.Coating = w.Friend.Coating = Coating.Dry;
@@ -248,6 +275,7 @@ namespace SecondHonk
                     monitor.Tick();
                     System.Threading.Thread.Sleep(10);
                 }
+
                 Assert(contentWorld.Content.Notes.Contains("Live reload honk"), "Folder watcher reloads saved notes without restarting");
                 string preset = Path.Combine(Store.Root, "Behaviors", "default.json");
                 File.WriteAllText(preset, "{\"TrailSteps\":7,\"FootprintSeconds\":4}");
@@ -269,6 +297,7 @@ namespace SecondHonk
                 UserContent.Initialize(AppDomain.CurrentDomain.BaseDirectory, null, false);
                 Assert(File.ReadAllText(note) == "Edited by user", "Seeding on upgrade preserves edited user content");
             }
+
             var fresh = New(content);
             Assert(fresh.Objects.Count == 0 && fresh.Marks.Count == 0, "Every new world starts with a clean desktop");
             Assert(CommandRegistry.Find("toolbox") != null && CommandRegistry.Find("clear") != null && CommandRegistry.Find("reload") != null && CommandRegistry.Find("content-folder") != null && CommandRegistry.Find("quit").Key == System.Windows.Forms.Keys.Q, "Shared command registry preserves shortcuts and adds content and toolbox commands");
@@ -314,9 +343,11 @@ namespace SecondHonk
                     Assert(bmp.GetPixel(400, 325).A > 0 && bmp.GetPixel(800, 325).A > 0, "Both active geese burst in the same rendered frame");
                     bmp.Save(Path.Combine(Program.ArtifactsFolder, "simultaneous-burst.png"));
                 }
+
                 session.AdvanceDismissal(false, .8f);
                 Assert(session.IsExited && !System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>().Any(), "Animated shutdown disposes every overlay and tool window");
             }
+
             using (var session = new DesktopSession(new SaveData { Sound = false }, new Content(Store.Root), "", true))
             {
                 session.World.DeliveryText = "Shutdown test note";
@@ -326,6 +357,7 @@ namespace SecondHonk
                 session.ExitThread();
                 Assert(session.IsExited && session.World.Objects.Count == 0 && !System.Windows.Forms.Application.OpenForms.Cast<System.Windows.Forms.Form>().Any(), "Immediate quit uses the same complete cleanup without animation");
             }
+
             w = New(content);
             var water = w.PlaceObject(ToyKind.Pond, new V(300, 350));
             ball = w.PlaceObject(ToyKind.Ball, new V(700, 350));
@@ -349,6 +381,7 @@ namespace SecondHonk
                 layer.BeginDrag(water.Pos + new V(water.Size.X / 2, -water.Size.Y / 2));
                 Assert(!w.Objects.Contains(water) && w.Objects.Contains(ball), "Remove handles delete only the selected object");
             }
+
             w = New(content);
             water = w.PlaceObject(ToyKind.Pond, new V(300, 350));
             using (var bmp = new Bitmap(1280, 752))
@@ -361,7 +394,9 @@ namespace SecondHonk
                 Assert(bmp.GetPixel(300, 350).A == 0 && bmp.GetPixel(300, (int)(350 - water.Size.Y / 2)).A > 0, "Water editing draws handles while keeping the surface click-through");
             }
         }
-        [DllImport("user32.dll")] static extern int GetGuiResources(IntPtr h, int flags);
+
+        [DllImport("user32.dll")]
+        static extern int GetGuiResources(IntPtr h, int flags);
         public static void NativeSmoke(Content content)
         {
             ApplicationThreadErrors();
@@ -385,6 +420,7 @@ namespace SecondHonk
                         w.Update(1f / 30);
                         overlay.RenderFrame();
                     }
+
                     clock.Stop();
                     int after = GetGuiResources(Process.GetCurrentProcess().Handle, 0);
                     if (after > before + 3)
@@ -402,6 +438,7 @@ namespace SecondHonk
                     output.Add("PASS  Overlay disappears offscreen and reappears for the returning goose.");
                     overlay.Close();
                 }
+
                 w = New(content);
                 w.Data.Companion = true;
                 w.Editing = true;
@@ -423,6 +460,7 @@ namespace SecondHonk
                         bg.RenderFrame();
                         toys.RenderFrame();
                     }
+
                     int after = GetGuiResources(Process.GetCurrentProcess().Handle, 0);
                     if (after > before + 3)
                         throw new Exception("Full assortment leaked GDI handles");
@@ -436,6 +474,7 @@ namespace SecondHonk
                         bmp.Save(Path.Combine(Program.ArtifactsFolder, "desktop-assortment.png"));
                     }
                 }
+
                 using (var box = new ToyBox(w, () => new Rectangle(0, 0, 1280, 752)))
                 {
                     box.Location = new Point(-10000, -10000);
@@ -445,8 +484,10 @@ namespace SecondHonk
                         box.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
                         bmp.Save(Path.Combine(Program.ArtifactsFolder, "native-toy-box.png"));
                     }
+
                     box.Close();
                 }
+
                 output.Add("PASS  Native Toy Box renders illustrated controls.");
                 using (var note = new GooseWindow("Honk.\r\nThis is a goose-created note.", ""))
                 {
@@ -457,8 +498,10 @@ namespace SecondHonk
                         note.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
                         bmp.Save(Path.Combine(Program.ArtifactsFolder, "native-goose-note.png"));
                     }
+
                     note.Close();
                 }
+
                 output.Add("PASS  Goose-created note uses an ordinary native text window.");
                 using (var audio = new HonkAudio())
                 {
@@ -466,16 +509,28 @@ namespace SecondHonk
                         throw new Exception("Original honk clips were not opened");
                     output.Add("PASS  Windows media backend opened the original Desktop Goose honk clips.");
                 }
+
                 PatchTests.Native(content, output);
                 BetaTests.Native(content, output);
                 Environment.ExitCode = 0;
             }
-            catch (Exception error) { output.Add("FAIL  " + error); Environment.ExitCode = 1; }
+            catch (Exception error)
+            {
+                output.Add("FAIL  " + error);
+                Environment.ExitCode = 1;
+            }
+
             File.WriteAllLines(Path.Combine(Program.ArtifactsFolder, "desktop-native-smoke.txt"), output);
         }
+
         static void ApplicationThreadErrors()
         {
-            System.Windows.Forms.Application.ThreadException += (s, e) => { Program.Log(e.Exception); File.WriteAllText(Path.Combine(Program.ArtifactsFolder, "native-thread-error.txt"), e.Exception.ToString()); Environment.Exit(1); };
+            System.Windows.Forms.Application.ThreadException += (s, e) =>
+            {
+                Program.Log(e.Exception);
+                File.WriteAllText(Path.Combine(Program.ArtifactsFolder, "native-thread-error.txt"), e.Exception.ToString());
+                Environment.Exit(1);
+            };
         }
     }
 }

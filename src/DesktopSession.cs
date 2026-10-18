@@ -25,7 +25,11 @@ namespace SecondHonk
         readonly List<GooseWindow> windows = new List<GooseWindow>();
         readonly Dictionary<string, EventWaitHandle> signals = new Dictionary<string, EventWaitHandle>();
         DesktopOverlay overlay;
-        DesktopOverlay toys; ToyBox toolbox; NoteEditor editor; readonly ContentMonitor contentMonitor; readonly ShutdownClock shutdown = new ShutdownClock();
+        DesktopOverlay toys;
+        ToyBox toolbox;
+        NoteEditor editor;
+        readonly ContentMonitor contentMonitor;
+        readonly ShutdownClock shutdown = new ShutdownClock();
         GooseWindow carried;
         readonly PicturePreparation pictures = new PicturePreparation();
         CancellationTokenSource deliveryCancel;
@@ -35,7 +39,10 @@ namespace SecondHonk
         double lastTime;
         float quietMenuIn;
         readonly bool testing;
-        public DesktopSession(SaveData settings, Content content, string initialCommand) : this(settings, content, initialCommand, false) { }
+        public DesktopSession(SaveData settings, Content content, string initialCommand) : this(settings, content, initialCommand, false)
+        {
+        }
+
         internal DesktopSession(SaveData settings, Content content, string initialCommand, bool test)
         {
             testing = test;
@@ -49,7 +56,13 @@ namespace SecondHonk
             tray.Visible = !testing;
             tray.DoubleClick += (s, e) => World.Call(Pointer());
             World.Honked += audio.Play;
-            World.FootLanded += () => { if (World.Goose.Task == Activity.Mud) audio.Mud(); else audio.Step(); };
+            World.FootLanded += () =>
+            {
+                if (World.Goose.Task == Activity.Mud)
+                    audio.Mud();
+                else
+                    audio.Step();
+            };
             World.CursorCaught += audio.Bite;
             World.DeliveryStarted += BeginDelivery;
             World.DeliveryCompleted += () => carried = null;
@@ -59,7 +72,15 @@ namespace SecondHonk
             World.Pointer = Pointer();
             World.Update(0);
             overlay.RenderFrame();
-            contentMonitor.SettingsChanged += () => { paintedPause = false; Screen selected = Screen.AllScreens.FirstOrDefault(s => s.DeviceName == World.Data.Monitor) ?? Screen.PrimaryScreen; if (!testing && selected.WorkingArea != overlay.Area) ChooseMonitor(World.Data.Monitor); World.Goose.FeetReady = World.Friend.FeetReady = false; World.GrabRemaining = 0; };
+            contentMonitor.SettingsChanged += () =>
+            {
+                paintedPause = false;
+                Screen selected = Screen.AllScreens.FirstOrDefault(s => s.DeviceName == World.Data.Monitor) ?? Screen.PrimaryScreen;
+                if (!testing && selected.WorkingArea != overlay.Area)
+                    ChooseMonitor(World.Data.Monitor);
+                World.Goose.FeetReady = World.Friend.FeetReady = false;
+                World.GrabRemaining = 0;
+            };
             timer.Interval = 33;
             timer.Tick += Tick;
             timer.Start();
@@ -72,25 +93,42 @@ namespace SecondHonk
                 signals[initialCommand].Set();
             WriteStatus();
         }
+
         V Pointer()
         {
             Point p = Cursor.Position;
             return new V(p.X - overlay.Area.X, p.Y - overlay.Area.Y);
         }
+
         ToolStripMenuItem Item(ToolStripItemCollection list, string title, Action action)
         {
             var item = new ToolStripMenuItem(title);
-            item.Click += (s, e) => { action(); paintedPause = false; };
+            item.Click += (s, e) =>
+            {
+                action();
+                paintedPause = false;
+            };
             list.Add(item);
             return item;
         }
+
         void Toggle(ToolStripItemCollection list, string title, Func<bool> get, Action<bool> set)
         {
-            var item = new ToolStripMenuItem(title) { CheckOnClick = false };
-            item.Click += (s, e) => { paintedPause = false; set(!get()); item.Checked = get(); Store.Save(World.Data); };
+            var item = new ToolStripMenuItem(title)
+            {
+                CheckOnClick = false
+            };
+            item.Click += (s, e) =>
+            {
+                paintedPause = false;
+                set(!get());
+                item.Checked = get();
+                Store.Save(World.Data);
+            };
             menu.Opening += (s, e) => item.Checked = get();
             list.Add(item);
         }
+
         void BuildMenu()
         {
             Item(menu.Items, "Toy Box", ShowToolbox);
@@ -110,55 +148,125 @@ namespace SecondHonk
             Item(mischief.DropDownItems, "Chase the cursor", () => World.Chase(Pointer()));
             Item(mischief.DropDownItems, "Track mud", World.MakeMud);
             menu.Items.Add(new ToolStripSeparator());
-            Toggle(menu.Items, "Paused                        Ctrl+Alt+P", () => World.Paused, v => { World.Paused = v; World.GrabRemaining = 0; });
+            Toggle(menu.Items, "Paused                        Ctrl+Alt+P", () => World.Paused, v =>
+            {
+                World.Paused = v;
+                World.GrabRemaining = 0;
+            });
             Toggle(menu.Items, "Quiet mode                   Ctrl+Alt+K", () => World.Data.Quiet, SetQuiet);
             var options = new ToolStripMenuItem("Options");
             menu.Items.Add(options);
             Toggle(options.DropDownItems, "Reduced motion", () => World.Data.ReducedMotion, v => World.Data.ReducedMotion = v);
             Toggle(options.DropDownItems, "Sound", () => World.Data.Sound, v => World.Data.Sound = v);
             Toggle(options.DropDownItems, "Automatic mischief", () => World.Data.Mischief, v => World.Data.Mischief = v);
-            Toggle(options.DropDownItems, "Mouse stealing when provoked", () => World.Data.MouseSteal, v => { World.Data.MouseSteal = v; if (!v) World.Cancel(); });
+            Toggle(options.DropDownItems, "Mouse stealing when provoked", () => World.Data.MouseSteal, v =>
+            {
+                World.Data.MouseSteal = v;
+                if (!v)
+                    World.Cancel();
+            });
             Toggle(options.DropDownItems, "Random cursor attacks", () => World.Data.RandomAttacks, v => World.Data.RandomAttacks = v);
-            Toggle(options.DropDownItems, "A second goose", () => World.Data.Companion, v => { World.Data.Companion = v; World.Friend.Place(World.Clamp(World.Goose.Pos + new V(-70, 25))); });
-            Item(options.DropDownItems, "Quiet for 25 minutes", () => { SetQuiet(true); World.QuietRemaining = 25 * 60; Store.Save(World.Data); });
+            Toggle(options.DropDownItems, "A second goose", () => World.Data.Companion, v =>
+            {
+                World.Data.Companion = v;
+                World.Friend.Place(World.Clamp(World.Goose.Pos + new V(-70, 25)));
+            });
+            Item(options.DropDownItems, "Quiet for 25 minutes", () =>
+            {
+                SetQuiet(true);
+                World.QuietRemaining = 25 * 60;
+                Store.Save(World.Data);
+            });
             var hats = new ToolStripMenuItem("Appearance");
             options.DropDownItems.Add(hats);
-            foreach (string hat in new[] { "None", "Scarf", "Sunhat" })
+            foreach (string hat in new[]
+            {
+                "None",
+                "Scarf",
+                "Sunhat"
+            }
+
+            )
             {
                 string value = hat;
-                var item = Item(hats.DropDownItems, hat == "None" ? "No accessories" : hat, () => { World.Data.Hat = value; Store.Save(World.Data); });
+                var item = Item(hats.DropDownItems, hat == "None" ? "No accessories" : hat, () =>
+                {
+                    World.Data.Hat = value;
+                    Store.Save(World.Data);
+                });
                 menu.Opening += (s, e) => item.Checked = World.Data.Hat == value;
             }
+
             var sizes = new ToolStripMenuItem("Size");
             options.DropDownItems.Add(sizes);
-            foreach (float size in new[] { 1f, 1.5f, 2f })
+            foreach (float size in new[]
+            {
+                1f,
+                1.5f,
+                2f
+            }
+
+            )
             {
                 float value = size;
-                var item = Item(sizes.DropDownItems, size == 1 ? "Small" : size == 1.5f ? "Normal" : "Large", () => { World.Data.Scale = value; World.Goose.FeetReady = World.Friend.FeetReady = false; Store.Save(World.Data); });
+                var item = Item(sizes.DropDownItems, size == 1 ? "Small" : size == 1.5f ? "Normal" : "Large", () =>
+                {
+                    World.Data.Scale = value;
+                    World.Goose.FeetReady = World.Friend.FeetReady = false;
+                    Store.Save(World.Data);
+                });
                 menu.Opening += (s, e) => item.Checked = World.Data.Scale == value;
             }
+
             var monitors = new ToolStripMenuItem("Display");
             options.DropDownItems.Add(monitors);
             foreach (Screen screen in Screen.AllScreens)
             {
                 Screen value = screen;
-                var item = Item(monitors.DropDownItems, screen.DeviceName + (screen.Primary ? " (primary)" : ""), () => { ChooseMonitor(value.DeviceName); World.Data.Monitor = value.DeviceName; Store.Save(World.Data); });
+                var item = Item(monitors.DropDownItems, screen.DeviceName + (screen.Primary ? " (primary)" : ""), () =>
+                {
+                    ChooseMonitor(value.DeviceName);
+                    World.Data.Monitor = value.DeviceName;
+                    Store.Save(World.Data);
+                });
                 menu.Opening += (s, e) => item.Checked = (World.Data.Monitor == value.DeviceName) || (String.IsNullOrEmpty(World.Data.Monitor) && value.Primary);
             }
+
             var content = new ToolStripMenuItem("Your content");
             menu.Items.Add(content);
-            Item(content.DropDownItems, "Import Pictures…", () => { RunModalTool(owner => UserContent.ImportPictures(owner, () => exiting)); });
-            Item(content.DropDownItems, "Edit Notes…", () => { if (editor == null || editor.IsDisposed) editor = new NoteEditor(); editor.Show(); editor.Activate(); });
+            Item(content.DropDownItems, "Import Pictures…", () =>
+            {
+                RunModalTool(owner => UserContent.ImportPictures(owner, () => exiting));
+            });
+            Item(content.DropDownItems, "Edit Notes…", () =>
+            {
+                if (editor == null || editor.IsDisposed)
+                    editor = new NoteEditor();
+                editor.Show();
+                editor.Activate();
+            });
             Item(content.DropDownItems, "Open Content Folder", OpenContent);
-            Item(content.DropDownItems, "Import Legacy Content Folder…", () => { RunModalTool(owner => UserContent.ImportLegacy(owner, () => exiting)); });
+            Item(content.DropDownItems, "Import Legacy Content Folder…", () =>
+            {
+                RunModalTool(owner => UserContent.ImportLegacy(owner, () => exiting));
+            });
             Item(content.DropDownItems, "Reload content", () => contentMonitor.Reload());
             Item(content.DropDownItems, "Copy diagnostics", CopyDiagnostics);
             menu.Items.Add(new ToolStripSeparator());
-            Item(menu.Items, "Clear desktop objects", () => { toys.ReleaseDrag(); World.ClearProps(); });
+            Item(menu.Items, "Clear desktop objects", () =>
+            {
+                toys.ReleaseDrag();
+                World.ClearProps();
+            });
             Item(menu.Items, "Close goose windows", ClearNotes);
             Item(menu.Items, "Quit                            Ctrl+Alt+Q", ExitThread);
-            menu.Opening += (s, e) => { World.GrabRemaining = 0; tray.Text = World.Paused ? "Goose on the Loose — paused" : World.Data.Quiet ? "Goose on the Loose — quiet" : "Goose on the Loose"; };
+            menu.Opening += (s, e) =>
+            {
+                World.GrabRemaining = 0;
+                tray.Text = World.Paused ? "Goose on the Loose — paused" : World.Data.Quiet ? "Goose on the Loose — quiet" : "Goose on the Loose";
+            };
         }
+
         void SetQuiet(bool quiet)
         {
             World.SetQuiet(quiet);
@@ -172,6 +280,7 @@ namespace SecondHonk
                 suppressRetaliation = false;
             }
         }
+
         internal void ShowToolbox()
         {
             if (toolbox == null || toolbox.IsDisposed)
@@ -179,22 +288,29 @@ namespace SecondHonk
                 toolbox = new ToyBox(World, () => overlay.Area);
                 toolbox.FormClosed += (s, e) => paintedPause = false;
             }
+
             toolbox.Show();
             World.Editing = true;
             toolbox.Activate();
         }
+
         void CopyDiagnostics()
         {
             try
             {
                 Clipboard.SetText(Diagnostics.Summary());
             }
-            catch (Exception error) { Program.Log(error); }
+            catch (Exception error)
+            {
+                Program.Log(error);
+            }
         }
+
         void OpenContent()
         {
             Process.Start(new ProcessStartInfo(Store.Root) { UseShellExecute = true });
         }
+
         void SessionEnding(object sender, Microsoft.Win32.SessionEndingEventArgs e)
         {
             if (exiting)
@@ -206,8 +322,11 @@ namespace SecondHonk
                 else
                     ExitThread();
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException)
+            {
+            }
         }
+
         void ChooseMonitor(string device)
         {
             if (toys != null)
@@ -215,11 +334,13 @@ namespace SecondHonk
                 toys.Close();
                 toys.Dispose();
             }
+
             if (overlay != null)
             {
                 overlay.Close();
                 overlay.Dispose();
             }
+
             Screen screen = Screen.AllScreens.FirstOrDefault(s => s.DeviceName == device) ?? Screen.PrimaryScreen;
             Rectangle area = testing ? new Rectangle(-10000, -10000, 1280, 752) : screen.WorkingArea;
             World.Resize(area.Width, area.Height);
@@ -232,6 +353,7 @@ namespace SecondHonk
             overlay.RenderFrame();
             toys.RenderFrame();
         }
+
         void ClearNotes()
         {
             deliveryRevision++;
@@ -241,6 +363,7 @@ namespace SecondHonk
                 deliveryCancel.Dispose();
                 deliveryCancel = null;
             }
+
             suppressRetaliation = true;
             foreach (var window in windows.ToArray())
                 if (!window.IsDisposed)
@@ -251,6 +374,7 @@ namespace SecondHonk
             if (World.Goose.Task == Activity.Deliver)
                 World.Cancel();
         }
+
         internal async void BeginDelivery()
         {
             if (deliveryCancel != null)
@@ -258,6 +382,7 @@ namespace SecondHonk
                 deliveryCancel.Cancel();
                 deliveryCancel.Dispose();
             }
+
             deliveryCancel = new CancellationTokenSource();
             var token = deliveryCancel.Token;
             int revision = ++deliveryRevision;
@@ -268,14 +393,23 @@ namespace SecondHonk
                 {
                     prepared = await pictures.Prepare(path, token);
                 }
-                catch (OperationCanceledException) { return; }
-                catch (Exception error) { Program.Log(error); note = "Could not open that picture. Have a honk instead."; }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (Exception error)
+                {
+                    Program.Log(error);
+                    note = "Could not open that picture. Have a honk instead.";
+                }
+
             if (exiting || revision != deliveryRevision || World.Data.Quiet || shutdown.Animating || (!String.IsNullOrEmpty(path) && World.Goose.Task != Activity.Deliver))
             {
                 if (prepared != null)
                     prepared.Dispose();
                 return;
             }
+
             windows.RemoveAll(w => w.IsDisposed);
             while (windows.Count >= 4)
             {
@@ -284,13 +418,27 @@ namespace SecondHonk
                 windows.RemoveAt(0);
                 suppressRetaliation = false;
             }
+
             var window = new GooseWindow(note, prepared);
             carried = window;
             windows.Add(window);
             PlaceCarriedWindow();
-            window.FormClosed += (s, e) => { if (!exiting && !suppressRetaliation && !World.Data.Quiet) { if (window == carried) { carried = null; World.Cancel(); } World.Chase(Pointer()); } };
+            window.FormClosed += (s, e) =>
+            {
+                if (!exiting && !suppressRetaliation && !World.Data.Quiet)
+                {
+                    if (window == carried)
+                    {
+                        carried = null;
+                        World.Cancel();
+                    }
+
+                    World.Chase(Pointer());
+                }
+            };
             window.Show();
         }
+
         void PlaceCarriedWindow()
         {
             if (carried == null || carried.IsDisposed)
@@ -299,6 +447,7 @@ namespace SecondHonk
             int x = overlay.Area.X + (int)beak.X - (World.DeliverySide < 0 ? carried.Width : 0), y = overlay.Area.Y + (int)beak.Y - carried.Height / 2;
             carried.Location = new Point(x, y);
         }
+
         void HandleCommand(int id)
         {
             paintedPause = false;
@@ -359,6 +508,7 @@ namespace SecondHonk
                     break;
             }
         }
+
         void Tick(object sender, EventArgs e)
         {
             foreach (var pair in signals)
@@ -368,6 +518,7 @@ namespace SecondHonk
                     if (exiting)
                         return;
                 }
+
             double now = watch.Elapsed.TotalSeconds;
             float elapsed = (float)(now - lastTime);
             lastTime = now;
@@ -386,12 +537,14 @@ namespace SecondHonk
                 toys.RenderFrame();
                 return;
             }
+
             contentMonitor.Tick();
             if (modalDepth > 0)
             {
                 World.Paused = true;
                 World.GrabRemaining = 0;
             }
+
             V pointer = Pointer();
             World.Pointer = pointer;
             bool left = (Native.GetAsyncKeyState(1) & 0x8000) != 0;
@@ -400,6 +553,7 @@ namespace SecondHonk
                 if (V.Distance(pointer, World.Goose.Pos - new V(0, 18 * World.Scale)) < 32 * World.Scale)
                     World.Chase(pointer);
             }
+
             leftWasDown = left;
             World.Update(dt);
             if (World.HoldingCursor && !escape)
@@ -407,6 +561,7 @@ namespace SecondHonk
                 V beak = World.Beak(World.Goose);
                 Native.SetCursorPos(overlay.Area.X + (int)beak.X, overlay.Area.Y + (int)beak.Y);
             }
+
             if (World.Goose.Task == Activity.Deliver && World.DeliveryStage == 2)
                 PlaceCarriedWindow();
             try
@@ -417,9 +572,16 @@ namespace SecondHonk
                     overlay.RenderFrame();
                     toys.RenderFrame();
                 }
+
                 paintedPause = World.Paused;
             }
-            catch (Exception error) { Program.Log(error); ExitThread(); return; }
+            catch (Exception error)
+            {
+                Program.Log(error);
+                ExitThread();
+                return;
+            }
+
             quietMenuIn -= dt;
             if (quietMenuIn <= 0)
             {
@@ -428,6 +590,7 @@ namespace SecondHonk
                 WriteStatus();
             }
         }
+
         internal void AdvanceDismissal(bool escape, float elapsed)
         {
             if (escape && !shutdown.Animating)
@@ -436,6 +599,7 @@ namespace SecondHonk
                 if (World.Goose.Task == Activity.Chase)
                     World.Cancel();
             }
+
             if (shutdown.Advance(escape, elapsed, World.Data.ReducedMotion))
             {
                 World.Cancel();
@@ -451,11 +615,13 @@ namespace SecondHonk
                 if (World.Data.Sound)
                     audio.Pop();
             }
+
             World.DismissRemaining = shutdown.Held > 0 && !shutdown.Animating ? 5 - shutdown.Held : 0;
             World.ExplosionTime = shutdown.EffectTime;
             if (shutdown.Finished)
                 ExitThread();
         }
+
         internal bool IsExited
         {
             get
@@ -463,6 +629,7 @@ namespace SecondHonk
                 return exiting;
             }
         }
+
         internal ToolDialogOwner DialogOwner
         {
             get
@@ -470,6 +637,7 @@ namespace SecondHonk
                 return dialogOwner;
             }
         }
+
         internal void RunModalTool(Action<ToolDialogOwner> action)
         {
             if (exiting || shutdown.Animating || modalDepth > 0)
@@ -483,9 +651,24 @@ namespace SecondHonk
             {
                 action(dialogOwner);
             }
-            catch (Exception error) { Program.Log(error); if (!exiting && !dialogOwner.IsDisposed) MessageBox.Show(dialogOwner, "The content tool could not finish. Your goose is still running.\r\n\r\n" + error.Message, "Could not open content tool", MessageBoxButtons.OK, MessageBoxIcon.Information); }
-            finally { modalDepth--; if (!exiting) { World.Paused = paused; World.GrabRemaining = 0; contentMonitor.Reload(); } }
+            catch (Exception error)
+            {
+                Program.Log(error);
+                if (!exiting && !dialogOwner.IsDisposed)
+                    MessageBox.Show(dialogOwner, "The content tool could not finish. Your goose is still running.\r\n\r\n" + error.Message, "Could not open content tool", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            finally
+            {
+                modalDepth--;
+                if (!exiting)
+                {
+                    World.Paused = paused;
+                    World.GrabRemaining = 0;
+                    contentMonitor.Reload();
+                }
+            }
         }
+
         void WriteStatus()
         {
             if (String.IsNullOrEmpty(Environment.GetEnvironmentVariable("DESKTOPGOOSE2_DATA_DIR")) && Environment.GetEnvironmentVariable("GOOSE_DIAGNOSTICS") != "1")
@@ -522,8 +705,12 @@ namespace SecondHonk
                 else
                     File.Move(temp, path);
             }
-            catch (Exception error) { Program.Log(error); }
+            catch (Exception error)
+            {
+                Program.Log(error);
+            }
         }
+
         protected override void ExitThreadCore()
         {
             if (exiting)
@@ -547,12 +734,14 @@ namespace SecondHonk
                 toys.Close();
                 toys.Dispose();
             }
+
             World.ClearProps();
             if (overlay != null)
             {
                 overlay.Close();
                 overlay.Dispose();
             }
+
             Store.Save(World.Data);
             WriteStatus();
             foreach (var signal in signals.Values)
@@ -565,6 +754,7 @@ namespace SecondHonk
             timer.Dispose();
             base.ExitThreadCore();
         }
+
         sealed class CommandWindow : NativeWindow, IDisposable
         {
             readonly Action<int> callback;
@@ -579,6 +769,7 @@ namespace SecondHonk
                         if (c.Key != Keys.None && !Native.RegisterHotKey(Handle, c.Id, 0x4003, (uint)c.Key))
                             Program.Log(new Exception("Shortcut already in use: Ctrl+Alt+" + c.Key));
             }
+
             protected override void WndProc(ref Message m)
             {
                 if (m.Msg == 0x312)
@@ -586,8 +777,10 @@ namespace SecondHonk
                     callback(m.WParam.ToInt32());
                     return;
                 }
+
                 base.WndProc(ref m);
             }
+
             public void Dispose()
             {
                 if (!testing)

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+
 namespace SecondHonk
 {
     sealed class PreparedPicture : IDisposable
@@ -20,24 +21,34 @@ namespace SecondHonk
                 using (var drawing = Graphics.FromImage(first))
                     drawing.DrawImageUnscaled(Image, 0, 0);
             }
-            catch { Image?.Dispose(); Stream.Dispose(); throw; }
+            catch
+            {
+                Image?.Dispose();
+                Stream.Dispose();
+                throw;
+            }
         }
+
         public void Dispose()
         {
             Image.Dispose();
             Stream.Dispose();
         }
     }
+
     sealed class PicturePreparation : IDisposable
     {
         sealed class Entry
         {
-            public string Key; public byte[] Bytes;
+            public string Key;
+            public byte[] Bytes;
         }
+
         readonly LinkedList<Entry> cache = new LinkedList<Entry>();
         readonly SemaphoreSlim gate = new SemaphoreSlim(1);
         readonly CancellationTokenSource lifetime = new CancellationTokenSource();
-        long bytes; bool disposed;
+        long bytes;
+        bool disposed;
         public long CachedBytes
         {
             get
@@ -45,6 +56,7 @@ namespace SecondHonk
                 return Interlocked.Read(ref bytes);
             }
         }
+
         internal int CachedPictures
         {
             get
@@ -52,6 +64,7 @@ namespace SecondHonk
                 return cache.Count;
             }
         }
+
         public async Task<PreparedPicture> Prepare(string path, CancellationToken token)
         {
             if (disposed)
@@ -76,6 +89,7 @@ namespace SecondHonk
                                 cache.AddFirst(new Entry { Key = key, Bytes = data });
                                 break;
                             }
+
                         if (data == null)
                         {
                             data = Pictures.ReadValidated(path, cancel);
@@ -87,6 +101,7 @@ namespace SecondHonk
                                 cache.RemoveLast();
                             }
                         }
+
                         cancel.ThrowIfCancellationRequested();
                         var prepared = new PreparedPicture(data);
                         if (cancel.IsCancellationRequested)
@@ -94,12 +109,23 @@ namespace SecondHonk
                             prepared.Dispose();
                             cancel.ThrowIfCancellationRequested();
                         }
+
                         return prepared;
                     }
-                    finally { if (lifetime.IsCancellationRequested) { cache.Clear(); Interlocked.Exchange(ref bytes, 0); } gate.Release(); }
+                    finally
+                    {
+                        if (lifetime.IsCancellationRequested)
+                        {
+                            cache.Clear();
+                            Interlocked.Exchange(ref bytes, 0);
+                        }
+
+                        gate.Release();
+                    }
                 }, cancel).ConfigureAwait(false);
             }
         }
+
         public void Dispose()
         {
             if (disposed)
@@ -113,7 +139,10 @@ namespace SecondHonk
                     cache.Clear();
                     Interlocked.Exchange(ref bytes, 0);
                 }
-                finally { gate.Release(); }
+                finally
+                {
+                    gate.Release();
+                }
             }
         }
     }

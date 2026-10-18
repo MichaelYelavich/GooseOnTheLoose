@@ -18,11 +18,13 @@ namespace SecondHonk
         readonly List<SoundPlayer> steps = new List<SoundPlayer>();
         readonly Random random = new Random();
         string bite, mud;
-        MemoryStream popWave; SoundPlayer popPlayer;
+        MemoryStream popWave;
+        SoundPlayer popPlayer;
         public int SuccessfulPlays
         {
             get; private set;
         }
+
         public string Backend
         {
             get
@@ -30,7 +32,9 @@ namespace SecondHonk
                 return honks.Count > 0 ? "Original Desktop Goose samples (WinMM)" : "Synthesized fallback";
             }
         }
-        [DllImport("winmm.dll", CharSet = CharSet.Unicode)] static extern uint mciSendString(string command, StringBuilder result, int length, IntPtr callback);
+
+        [DllImport("winmm.dll", CharSet = CharSet.Unicode)]
+        static extern uint mciSendString(string command, StringBuilder result, int length, IntPtr callback);
         string Open(string folder, string filename, string alias)
         {
             string path = Path.Combine(folder, filename);
@@ -39,8 +43,10 @@ namespace SecondHonk
                 opened.Add(alias);
                 return alias;
             }
+
             return null;
         }
+
         bool PlayClip(string alias, int volume)
         {
             if (alias == null)
@@ -53,6 +59,7 @@ namespace SecondHonk
                 SuccessfulPlays++;
             return success;
         }
+
         public HonkAudio()
         {
             string folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Sounds");
@@ -62,6 +69,7 @@ namespace SecondHonk
                 if (alias != null)
                     honks.Add(alias);
             }
+
             bite = Open(folder, "BITE.mp3", "dg2_bite");
             mud = Open(folder, "MudSquith.mp3", "dg2_mud");
             for (int i = 1; i <= 3; i++)
@@ -74,8 +82,11 @@ namespace SecondHonk
                         step.Load();
                         steps.Add(step);
                     }
-                    catch (Exception) { }
+                    catch (Exception)
+                    {
+                    }
             }
+
             wave = new MemoryStream();
             var writer = new BinaryWriter(wave);
             int rate = 22050, count = (int)(rate * .26);
@@ -100,10 +111,12 @@ namespace SecondHonk
                 double value = (Math.Sin(phase) + .4 * Math.Sin(phase * 2) + .2 * Math.Sin(phase * 3)) * envelope * .21;
                 writer.Write((short)(value * short.MaxValue));
             }
+
             wave.Position = 0;
             player = new SoundPlayer(wave);
             player.Load();
         }
+
         public void Play()
         {
             if (honks.Count > 0 && PlayClip(honks[random.Next(honks.Count)], 650))
@@ -112,17 +125,22 @@ namespace SecondHonk
             {
                 player.Play();
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+            }
         }
+
         public void Bite()
         {
             if (!PlayClip(bite, 180))
                 Play();
         }
+
         public void Mud()
         {
             PlayClip(mud, 150);
         }
+
         public void Step()
         {
             if (steps.Count > 0)
@@ -130,8 +148,11 @@ namespace SecondHonk
                 {
                     steps[random.Next(steps.Count)].Play();
                 }
-                catch (Exception) { }
+                catch (Exception)
+                {
+                }
         }
+
         public void Pop()
         {
             try
@@ -158,14 +179,19 @@ namespace SecondHonk
                         double t = (double)i / rate, u = (double)i / count;
                         writer.Write((short)(Math.Sin(2 * Math.PI * (260 * t - 500 * t * t)) * Math.Exp(-u * 7) * 3500));
                     }
+
                     popWave.Position = 0;
                     popPlayer = new SoundPlayer(popWave);
                     popPlayer.Load();
                 }
+
                 popPlayer.Play();
             }
-            catch (Exception) { }
+            catch (Exception)
+            {
+            }
         }
+
         public void Dispose()
         {
             foreach (string alias in opened)

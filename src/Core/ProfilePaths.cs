@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+
 namespace SecondHonk
 {
     public static class ProfilePaths

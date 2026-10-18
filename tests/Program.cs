@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
+
 namespace SecondHonk
 {
     static class TestRunner
@@ -16,6 +17,7 @@ namespace SecondHonk
                 Performance.Main(new[] { args.Length > 1 ? args[1] : Path.Combine(Program.ArtifactsFolder, "performance.txt"), args.Length > 2 ? args[2] : "0" });
                 return Environment.ExitCode;
             }
+
             if (args.Length > 0 && args[0] == "--native-smoke")
                 SelfTest.NativeSmoke(content);
             else
