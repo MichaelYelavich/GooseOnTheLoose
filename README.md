@@ -4,11 +4,12 @@
 
 An unofficial Windows 11 sequel to Samperson's Desktop Goose. The goose lives directly on your desktop: wandering, honking, fetching sticks, stealing the cursor when provoked, and dragging back ordinary note and picture windows. Its procedural shape and planted footsteps follow the original game. Original sound samples are included.
 
-## What changed in this beta
+## What is this?
 
-This is the next iteration after Desktop Goose 2 0.3.1, now called **Goose on the Loose**. It keeps the desktop geese, toys, water and native tools, and focuses on reliability and performance.
+This is a spiritual successor to Desktop Goose, now called **Goose on the Loose**. It keeps the desktop geese, adds toys, water and native tools, and focuses on reliability and performance.
 
-Fixed a crash when content disappears during a delivery, made picture preparation asynchronous, added safer note saving with conflict copies, hardened content reload and startup, and reduced rendering allocations. Tests now run separately from the game. Repeatable builds, GitHub checks and release tooling support future updates. Details: [release notes](RELEASE_NOTES.md).
+
+Repeatable builds, GitHub checks and release tooling support future updates. Details: [release notes](RELEASE_NOTES.md).
 
 ## Install and play
 
