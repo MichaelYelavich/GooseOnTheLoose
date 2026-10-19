@@ -1,98 +1,126 @@
-# Goose on the Loose — Beta Release 1
+<div align="center">
 
-[Download the beta](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.4.0-beta.1) · [Report a bug](https://github.com/MichaelYelavich/GooseOnTheLoose/issues/new/choose)
+# Goose on the Loose
 
-An unofficial Windows 11 sequel to Samperson's Desktop Goose. The goose lives directly on your desktop: wandering, honking, fetching sticks, stealing the cursor when provoked, and dragging back ordinary note and picture windows. Its procedural shape and planted footsteps follow the original game. Original sound samples are included.
+**A little desktop chaos. A lot of goose.**
+
+A spiritual successor to Desktop Goose, made for Windows 11.
+
+[![Windows 11](https://img.shields.io/badge/Windows-11-436c83)](docs/PLAYING.md#install-and-play) [![Beta Release 1](https://img.shields.io/badge/release-Beta_Release_1-6b8055)](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.4.0-beta.1) [![Windows validation](https://github.com/MichaelYelavich/GooseOnTheLoose/actions/workflows/ci.yml/badge.svg)](https://github.com/MichaelYelavich/GooseOnTheLoose/actions/workflows/ci.yml)
+
+![A white goose and a Canada goose with a ball, fetch stick, peas, pond and rubber duck.](docs/assets/desktop-geese.png)
+
+*An illustration made with the game's own renderer. The geese live on your desktop.*
+
+[**Download Beta Release 1**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.4.0-beta.1) · [Player guide](docs/PLAYING.md) · [Roadmap](#roadmap) · [Report a bug](https://github.com/MichaelYelavich/GooseOnTheLoose/issues/new/choose)
+
+</div>
 
 ## What is this?
 
-This is a spiritual successor to Desktop Goose, now called **Goose on the Loose**. It keeps the desktop geese, adds toys, water and native tools, and focuses on reliability and performance.
+**Goose on the Loose is an independent spiritual successor to [Desktop Goose by Samperson](https://samperson.itch.io/desktop-goose).** It keeps the desktop geese, adds toys, water and native tools, and focuses on reliability and performance.
 
+Your goose wanders across your desktop, honks, fetches sticks and brings you pictures and notes. Add a Canada goose for company, drop a pond beside your work, or leave out a ball and see what happens. They can even steal your cursor when provoked.
 
-Repeatable builds, GitHub checks and release tooling support future updates. Details: [release notes](RELEASE_NOTES.md).
+Everything happens directly on the desktop. Controls live in the tray, and the Toy Box opens when you want it. No account is needed, and the game runs offline.
 
-## Install and play
+## What's here already
 
-Double-click **GooseOnTheLoose-Beta1-Setup.exe**. It installs per-user under `%LOCALAPPDATA%\Programs\GooseOnTheLoose` and creates a Start menu shortcut. Desktop and Windows-startup shortcuts are optional and start unchecked. Administrator access is not required. Updates preserve settings and content. Uninstall removes the application and shortcuts while keeping your Documents content.
-
-For a portable copy, extract the entire Windows ZIP and double-click **GooseOnTheLoose.exe**. Keep every extracted file and folder alongside it, including Goose.Core.dll. Windows 11's included .NET Framework is sufficient; no account, network connection, or extra runtime download is required.
-
-Right-click the goose tray icon for **Toy Box**, Play, Mischief, Pause, Quiet mode, Options, Your content, cleanup, and Quit. There is no required control window. Options includes a second goose, outfits, sizes, display selection, reduced motion, sound, and cursor-stealing preferences. Random cursor attacks start disabled; a provoked theft lasts at most 1.4 seconds.
-
-## Toy Box and water
-
-Open **Toy Box**, then drag an illustrated button onto the selected display. Place up to **16 independent objects**: balls, fetch sticks, peas, rubber ducks, ponds, puddles, and mud patches. Every launch starts with a clean desktop.
-
-- Flick balls by dragging and releasing them. They bounce at desktop edges and geese nudge them.
-- Sticks trigger fetch and are dropped on return, ready to move or throw again.
-- Peas distract and calm the goose. Either goose can eat them.
-- Rubber ducks can be nudged and drift on ponds.
-- Geese float in ponds with ripples. Puddles wet their feet without swimming; mud patches make them muddy. Clean water washes mud off.
-- Each goose leaves its own wet or muddy footprints after leaving a surface: 20 foot landings by default, fading over 10 seconds, with at most 256 prints shared between geese.
-
-Toys are draggable. Water and the goose background let desktop input pass through. While the Toy Box is open, water gets move and resize handles; every object gets a small remove button. Close the box to hide handles. **Clear desktop objects** removes toys, water, and footprints without quitting. Pause stops gameplay; placement tools remain available.
-
-## Leave the desktop
-
-Press **Escape** briefly to release the cursor immediately. Hold it for **five seconds** to dismiss the geese: a countdown appears, then all active geese burst together into cartoon feathers and smoke with a soft pop. Releasing Escape early cancels the countdown. Reduced motion uses a short fade. Everything disappears within one second after the countdown, including delivered windows, objects, overlays, and the tray icon.
-
-Tray **Quit**, **Ctrl+Alt+Q**, installer shutdown, and Windows shutdown clean up immediately.
-
-| Shortcut | Action |
+| | On your desktop |
 | --- | --- |
-| Ctrl+Alt+G | Call the goose |
-| Ctrl+Alt+F | Drop peas |
-| Ctrl+Alt+B | Throw a ball |
-| Ctrl+Alt+T | Throw a fetch stick |
-| Ctrl+Alt+N | Bring a note |
-| Ctrl+Alt+I | Bring a picture |
-| Ctrl+Alt+H | Honk |
-| Ctrl+Alt+P | Pause / resume |
-| Ctrl+Alt+K | Quiet mode |
-| Ctrl+Alt+Q | Quit immediately |
+| **Two geese** | A white goose and an optional Canada goose companion. Shared scarves, sunhats and size settings. |
+| **A proper Toy Box** | Balls, fetch sticks, peas, rubber ducks, ponds, puddles and mud patches. Place up to 16 objects. |
+| **Water and muddy feet** | Swimming, ripples, floating ducks and fading wet or muddy footprints. Clean water washes mud away. |
+| **Personal mischief** | Geese deliver your pictures and ordinary text notes in small native windows. |
+| **Room to adjust** | Pause, quiet mode, reduced motion and cursor-stealing preferences, plus editable behavior presets. |
 
-Closing a delivered window can provoke the goose. Cleanup and shutdown never provoke retaliation. At most four delivered windows remain open.
+Preferences and custom content persist. Toys, water, footprints and delivered windows start fresh each time you launch.
 
-## Your content
+## Let them loose
 
-The tray's **Your content** menu includes **Copy diagnostics** and offers **Import Pictures**, **Edit Notes**, **Open Content Folder**, **Import Legacy Content Folder**, and **Reload content**.
+| Download | What to do |
+| --- | --- |
+| [**Windows installer**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/download/v0.4.0-beta.1/GooseOnTheLoose-Beta1-Setup.exe) | Double-click to install for your Windows account. No administrator access needed. |
+| [**Portable ZIP**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/download/v0.4.0-beta.1/GooseOnTheLoose-Beta1-windows.zip) | Extract the entire folder, then run **GooseOnTheLoose.exe**. Keep its companion files beside it. |
 
-Windows' Documents known-folder location is used. Existing DesktopGoose2 collections remain in their original folder; fresh profiles use:
+Requires **Windows 11**. Its included .NET Framework is sufficient; players don't need developer tools or an extra runtime download. Desktop and startup shortcuts are optional and off by default.
+
+1. Launch the game and **right-click its tray icon** for controls.
+2. Open **Toy Box** and drag a toy or patch of water onto the selected display.
+3. Open **Options** to invite the second goose, choose an outfit or adjust the mischief.
+
+**Need your cursor back?** Tap **Escape**. To dismiss everything, hold Escape for **five seconds** and watch the geese burst into cartoon feathers. Release early to cancel. Tray **Quit** or **Ctrl+Alt+Q** exits immediately.
+
+The installer is currently unsigned. See the [player guide](docs/PLAYING.md) for installation, all shortcuts and cleanup controls.
+
+## Make it yours
+
+Use **Your content → Import Pictures** or **Edit Notes** in the tray menu. You can also open the content folder and edit the files yourself; changes reload while the game runs.
+
+Fresh profiles use your Windows Documents folder:
 
 ```text
-Documents/GooseOnTheLoose/
-  settings.json
-  Pictures/
-  Notes/
-  Behaviors/default.json
-  README.txt
+GooseOnTheLoose/
+├── Pictures/               Your PNG, JPEG and GIF files
+├── Notes/                  Ordinary text notes
+├── Behaviors/default.json  Activity and toy-reaction settings
+├── settings.json           Saved preferences
+└── README.txt              Content and preset instructions
 ```
 
-Import multiple PNG, JPEG, or GIF files at once, or copy them into Pictures. Each picture may be up to 8 MB and 8192 pixels per side. Animations are limited to 500 frames and 128 million decoded pixels. Notes are ordinary .txt files of up to 1000 characters; the small native editor creates them and saves changed text after a one-second pause. External edits produce a conflict copy instead of being overwritten. Files reload after a 650 ms save debounce. Incomplete pictures are skipped. Invalid behavior or settings files keep the last valid configuration.
+Existing **DesktopGoose2** collections stay where they are. Updates preserve your settings and content, and uninstalling keeps the Documents folder. Read the [customization guide](docs/PLAYING.md#your-content) for limits, legacy imports and behavior presets.
 
-The behavior preset controls prank intervals, activity weights, toy approach/nudge speeds, trail length, and footprint lifetime. Its `_comment` field and README.txt explain editing; keep the file valid JSON. Scripted mods and original DLL mods are outside this version. Sound samples can be replaced in Assets/Sounds.
+## Roadmap
 
-Existing `%LOCALAPPDATA%\DesktopGoose2\settings.json` is copied once if Documents settings do not exist. **Import Legacy Content Folder** copies older pictures, text files, or JSON note packs without overwriting current files. Sample content is seeded only when missing; removed samples are not recreated on each launch. Objects, footprints, and delivered windows are never saved.
+The desktop companion comes first. These are priorities, not promised dates; beta feedback will help shape the details.
 
-## Build and verify
+### Next · More personality, more play
 
-Developers need PowerShell 7 and the exact .NET SDK in `global.json`. Players need no SDK. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+- Give the geese more distinct habits, reactions and interactions with each other.
+- Make the existing toys and water more interesting before filling the Toy Box with new things.
+- Polish movement, expressive animation and reduced-motion behavior.
+- Keep improving stability and performance using reproducible reports and local measurements.
+
+### Then · A bigger desktop
+
+- Let geese travel between monitors, with sensible placement for toys and delivered windows.
+- Handle mixed display scaling, displays to the left or above the main screen, and reconnecting monitors.
+- Test sleep, resume and display changes across a broader hardware setup before replacing the current selected-display model.
+
+### Exploring · Better ways to make it yours
+
+- Picture and note collections that are easier to organize.
+- More documented behavior presets and clearer content tools.
+
+The current beta uses **one selected display at a time**. See the [expanded roadmap](docs/ROADMAP.md) and [verification record](VALIDATION.md) for scope and remaining testing limits. Have an idea? [Suggest a feature](https://github.com/MichaelYelavich/GooseOnTheLoose/issues/new/choose).
+
+## Build, contribute, improve
+
+The source is public, and source updates are separate from downloadable releases. Ordinary commits and pull requests run the Windows checks; publishing a release is a separate, manual workflow.
+
+On Windows 11, install **Git**, **PowerShell 7** and the exact **.NET SDK pinned in [global.json](global.json)**, then run:
 
 ```powershell
+git clone https://github.com/MichaelYelavich/GooseOnTheLoose.git
+cd GooseOnTheLoose
 ./build.ps1 -Locked
 ./tools/verify.ps1 -Interactive -Format
 ```
 
-Builds go to `dist`, and reports/staging go to `.work`. The shipped game contains no test runner. `tools/package.ps1` produces an installer, portable ZIP and committed-source ZIP; `tools/verify-installer.ps1` verifies a real 0.3.1 upgrade with isolated product/data paths. Inno Setup 6.7.3 is discovered through `INNO_COMPILER` or installed with `tools/install-inno.ps1`.
+Players continue to use .NET Framework 4.8. The SDK is only for development. Installer packaging also needs Inno Setup; dependencies, build commands and contribution guidance are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Commands for the running instance: `--come`, `--peas`, `--ball`, `--fetch`, `--note`, `--image`, `--honk`, `--pause`, `--quiet`, `--menu`, `--quit`, `--toolbox`, `--content-folder`, `--reload`, `--clear`, and `--diagnostics`. A second launch calls the existing goose. `--quit` waits for cleanup. `--seed-content` initializes missing content without gameplay. `--snapshot output.png` exports goose artwork.
+## Find your way around
 
-**Your content > Copy diagnostics** copies a summary without custom content or paths. When no game is running, `--diagnostics` writes that summary to diagnostics.txt in the content folder. Error logs stay local and rotate across three files. There are no automatic uploads. runtime.json is enabled only for tests or with `GOOSE_DIAGNOSTICS=1`.
+| Looking for… | Start here |
+| --- | --- |
+| Installation, controls, toys and custom content | [Player guide](docs/PLAYING.md) |
+| Build instructions and dependencies | [Contributing](CONTRIBUTING.md) |
+| How the application fits together | [Architecture](docs/ARCHITECTURE.md) |
+| What's planned | [Roadmap](docs/ROADMAP.md) |
+| What changed and what was tested | [Release notes](RELEASE_NOTES.md) · [Validation and known limits](VALIDATION.md) |
+| How releases are prepared | [Release checklist](docs/RELEASING.md) |
+| Background and original sound sources | [Research](RESEARCH.md) · [Sound provenance](Assets/Sounds/PROVENANCE.md) |
 
-For isolated tests, `DESKTOPGOOSE2_DATA_DIR` overrides the data directory and gives the instance separate command events and a separate single-instance lock. Normal launches use Documents. Old and renamed executable names share one instance after an upgrade.
+---
 
-Beta limitations: unsigned installer; one selected display at a time; mixed-DPI/display hot-plugging, real Documents redirection, and startup after reboot require further hardware/environment testing. See [validation](VALIDATION.md) and the [roadmap](docs/ROADMAP.md).
-
-Research: [RESEARCH.md](RESEARCH.md). Test evidence and limits: [VALIDATION.md](VALIDATION.md). Sound sources: [Assets/Sounds/PROVENANCE.md](Assets/Sounds/PROVENANCE.md).
-
-Inspired by [Desktop Goose by Samperson](https://samperson.itch.io/desktop-goose). This is an independent fan sequel.
+Inspired by **[Desktop Goose by Samperson](https://samperson.itch.io/desktop-goose)**. Goose on the Loose is an independent project; the original game's contribution and the source research behind this one are documented in [RESEARCH.md](RESEARCH.md).

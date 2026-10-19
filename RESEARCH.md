@@ -1,4 +1,6 @@
-# Desktop Goose: source research and sequel design
+# Desktop Goose research — Goose on the Loose
+
+Goose on the Loose is an independent spiritual successor to Samperson's Desktop Goose. This research records the original game, recovered source and mod ecosystem that informed the project. Historical comparisons below use the earlier working name **Desktop Goose 2**; current player and build documentation uses **Goose on the Loose**.
 
 Research date: **13 October 2026**. This investigation combined the creator's page, GitHub repository discovery, inspection of eight checkouts, and GitHub comparisons of the four forks of the public decompilation. Repository SHAs and commit dates are recorded in `research/sources.json`; the discovery response is in `research/github-search.json`. Downloaded reference checkouts remain under `research/`, excluded from this project's distribution.
 
