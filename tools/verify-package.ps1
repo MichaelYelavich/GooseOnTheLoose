@@ -12,6 +12,10 @@ try {
     if ((Get-FileHash -LiteralPath $exe).Hash -ne (Get-FileHash -LiteralPath (Join-Path $ProjectRoot 'dist/GooseOnTheLoose.exe')).Hash) { throw 'Portable binary differs from the release build.' }
     if ((Get-Item -LiteralPath $exe).VersionInfo.FileVersion -ne $FileVersion) { throw 'Incorrect portable version.' }
     $report.Add('PASS  Portable archive matches the verified beta executable and extracts in a path containing spaces.')
+    foreach ($document in @('README.md','CONTRIBUTING.md','RESEARCH.md','VALIDATION.md','global.json','docs/PLAYING.md','docs/ROADMAP.md','docs/ARCHITECTURE.md','docs/RELEASING.md','docs/assets/desktop-geese.png')) {
+        if (!(Test-Path -LiteralPath (Join-Path $portable $document)) -or ((Get-FileHash -LiteralPath (Join-Path $portable $document)).Hash -ne (Get-FileHash -LiteralPath (Join-Path $ProjectRoot $document)).Hash)) { throw ('Missing or stale portable documentation: '+$document) }
+    }
+    $report.Add('PASS  Portable archive includes current player/developer guides, roadmap and README artwork.')
     $env:DESKTOPGOOSE2_DATA_DIR=Join-Path $stage 'Portable Content With Spaces'
     $process=Start-Process -FilePath $exe -ArgumentList '--seed-content' -WindowStyle Hidden -Wait -PassThru
     if ($process.ExitCode -ne 0 -or !(Test-Path -LiteralPath (Join-Path $env:DESKTOPGOOSE2_DATA_DIR 'Pictures/honk.png'))) { throw 'Portable seeding failed.' }

@@ -43,6 +43,11 @@ Source: "..\dist\GooseOnTheLoose.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\GooseOnTheLoose.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\dist\RELEASE_NOTES.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\CONTRIBUTING.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\RESEARCH.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\VALIDATION.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\global.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\dist\Assets\*"; DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\dist\Packs\*"; DestDir: "{app}\Packs"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\dist\Goose.Core.dll"; DestDir: "{app}"; Flags: ignoreversion

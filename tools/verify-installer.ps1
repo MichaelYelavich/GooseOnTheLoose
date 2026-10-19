@@ -51,6 +51,9 @@ try {
     Check ($app.WaitForExit(5000)) 'Upgrade gracefully shuts down the running 0.3.1 instance'
     $exe=Join-Path $install 'GooseOnTheLoose.exe'
     Check ((Test-Path -LiteralPath $exe) -and ((Get-Item -LiteralPath $exe).VersionInfo.FileVersion -eq $FileVersion)) 'Upgrade reuses the previous installation directory and installs the beta'
+    foreach ($document in @('docs/PLAYING.md','docs/assets/desktop-geese.png','CONTRIBUTING.md','RESEARCH.md','VALIDATION.md','global.json')) {
+        Check ((Test-Path -LiteralPath (Join-Path $install $document)) -and ((Get-FileHash -LiteralPath (Join-Path $install $document)).Hash -eq (Get-FileHash -LiteralPath (Join-Path $ProjectRoot $document)).Hash)) ('Installer includes current documentation: '+$document)
+    }
     Check (((Get-FileHash -LiteralPath (Join-Path $install 'DesktopGoose2.exe')).Hash) -eq ((Get-FileHash -LiteralPath $exe).Hash)) 'Old executable shortcuts launch the current beta compatibility binary'
     Check ((Test-Path -LiteralPath $startup) -and (Test-Path -LiteralPath $desktop) -and (Test-Path -LiteralPath $start)) 'Selected startup, desktop and Start menu shortcuts use the new name'
     Check (!(Test-Path -LiteralPath (Join-Path ([Environment]::GetFolderPath('Programs')) 'Desktop Goose 2 Installer Test.lnk'))) 'Upgrade removes the obsolete Start menu shortcut'

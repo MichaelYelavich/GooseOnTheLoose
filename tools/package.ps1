@@ -13,7 +13,7 @@ try {
     $stage = Join-Path $ProjectRoot ('.work/package-'+[guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Force $stage | Out-Null
     try {
-        foreach ($item in @('GooseOnTheLoose.exe','GooseOnTheLoose.exe.config','Goose.Core.dll','GooseOnTheLoose.ico','README.md','RELEASE_NOTES.md','RESEARCH.md','VALIDATION.md','Assets','Packs')) { Copy-Item -LiteralPath (Join-Path $ProjectRoot ('dist/'+$item)) -Destination $stage -Recurse }
+        foreach ($item in @('GooseOnTheLoose.exe','GooseOnTheLoose.exe.config','Goose.Core.dll','GooseOnTheLoose.ico','README.md','CONTRIBUTING.md','RELEASE_NOTES.md','RESEARCH.md','VALIDATION.md','global.json','docs','Assets','Packs')) { Copy-Item -LiteralPath (Join-Path $ProjectRoot ('dist/'+$item)) -Destination $stage -Recurse }
         Compress-Archive -Path (Join-Path $stage '*') -DestinationPath (Join-Path $release ($PackagePrefix+'-windows.zip')) -Force
         & git archive --format=zip ('--output='+ (Join-Path $release ($PackagePrefix+'-source.zip'))) HEAD
         if ($LASTEXITCODE -ne 0) { throw 'Source archive failed.' }

@@ -18,5 +18,6 @@ try {
         foreach ($folder in @('Assets','Packs')) { Copy-Item -LiteralPath $folder -Destination $destination -Recurse -Force }
         Copy-Item -LiteralPath (Join-Path $generated 'Packs/Images') -Destination (Join-Path $destination 'Packs') -Recurse -Force
     }
-    Copy-Item -LiteralPath README.md,RELEASE_NOTES.md,RESEARCH.md,VALIDATION.md -Destination dist -Force
+    Copy-Item -LiteralPath README.md,CONTRIBUTING.md,RELEASE_NOTES.md,RESEARCH.md,VALIDATION.md,global.json -Destination dist -Force
+    Copy-Item -LiteralPath docs -Destination dist -Recurse -Force
 } finally { Pop-Location }
