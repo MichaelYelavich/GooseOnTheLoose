@@ -39,3 +39,17 @@ Six extracted-package checks pass: portable hash/version, seed/start/quit, byte-
 A disposable Windows 11 VM/Sandbox is unavailable locally. Local tests use isolated paths and a separate product identity; hosted checks run in a separate Windows Server 2025 runner. Actual Windows known-folder redirection, network-backed Documents, reboot/sign-in startup execution, Windows shutdown during a held native window drag, ARM64, mixed-DPI multi-monitor hardware, and display hot-plugging remain unverified. The current application uses one selected display. Native modal tests are an explicit local gate, not silently treated as passing in noninteractive CI.
 
 The installer is unsigned. No automatic telemetry is sent. Test logs, fixtures generated during runs, profile paths, and local user content are excluded from release packages and Git. Historical 0.3.1 evidence is preserved separately in docs.
+
+## Beta 2 packaging verification (Card 6, local, 2026-10-25)
+
+Version bump only (0.4.0-beta.1 → 0.5.0-beta.1, `Version.props` plus player-facing strings; installer AppId, IPC identity and data-directory behavior unchanged). Build: locked restore, Release build, asset generation, format check clean, **417 application checks and 17 native checks pass** on this host. Packages rebuilt with Inno Setup 6.7.3 (hash- and signature-verified per `tools/install-inno.ps1`) into `.work/release/`:
+
+- `GooseOnTheLoose-Beta2-Setup.exe` — 2,248,952 bytes, SHA-256 `9B2E3D1C7EB22758865FE74BCC0A291719381EB9E6C0C63CEAA74E1F9A9A`
+- `GooseOnTheLoose-Beta2-windows.zip` — 263,606 bytes, SHA-256 `31BB05137D15CE285B77FCDB4BDB4B1FF6A0B6C230A7881EE5F01CA17E1C99`
+- `GooseOnTheLoose-Beta2-source.zip` — 329,544 bytes, SHA-256 `E237D1D9653D4A36AC316B2DB4CEC39743E3595A42794ED5BC29FFBA`
+
+Both ZIPs contain no `private/`, `.work/`, `artifacts/`, `bin/`, `obj/` or `.git/` entries and no test runtime in the portable game; the source archive holds exactly the 101 tracked files at the release commit. The portable executable is byte-identical to `dist/GooseOnTheLoose.exe` (MD5 `9e73f012898b0989a40324768162ca35`).
+
+Upgrade: the Beta 2 installer installed in place over a genuine Beta 1 install (same per-user directory, same uninstall registration, DisplayVersion updated to 0.5.0-beta.1). Seeded settings, a sentinel custom note and a custom picture hash were unchanged by the upgrade, and `--seed-content` rewrote nothing existing. A second Beta 2 upgrade over a live running instance shut the instance down via the IPC `--quit` handshake (no surviving process, files replaced cleanly, `--seed-content` exit 0); holding the binary open makes setup abort before any replacement with "Please quit Goose on the Loose from its tray menu, then try again" (exit 7), leaving the install untouched.
+
+Not re-run in this card: hosted CI gates, the 30-minute soak, and the full test-identity installer suite (`tools/verify-installer.ps1`) — unchanged installer script, re-verified at release time per the checklist.
