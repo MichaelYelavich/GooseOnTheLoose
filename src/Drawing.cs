@@ -157,8 +157,22 @@ namespace SecondHonk
                         }
                 }
 
-            if (world.CarryingStick)
-                Stick(g, world.Beak(world.Goose), world.Scale);
+            foreach (var goose in world.Data.Companion ? new[]
+            {
+                world.Goose,
+                world.Friend
+            }
+
+            : new[]
+            {
+                world.Goose
+            }
+
+            )
+            {
+                if (goose.Held != null && goose.Held.Kind == ToyKind.Stick)
+                    Stick(g, world.Beak(goose), world.GooseScale(goose));
+            }
             if (world.DismissRemaining > 0)
             {
                 V p = DismissPosition(world);

@@ -160,11 +160,8 @@ namespace SecondHonk
                 if ((!o.Surface && o.Contains(p)) || move || resize)
                 {
                     dragging = o;
-                    if (o.Kind == ToyKind.Stick)
-                        world.Cancel();
+                    world.OnObjectDragged(o);
                     o.Dragging = true;
-                    o.Carried = false;
-                    world.GrabRemaining = 0;
                     resizing = resize;
                     dragOffset = p - o.Pos;
                     lastPointer = p;

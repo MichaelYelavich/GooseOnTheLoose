@@ -22,17 +22,32 @@ namespace SecondHonk
 
     public sealed class Goose
     {
-        public V Pos, Velocity, Target, LeftFoot, RightFoot, FootOrigin, FootDestination;
+        public readonly int Id;
+        public readonly string Name;
+        public V Pos, Velocity, Target, Attention, LeftFoot, RightFoot, FootOrigin, FootDestination;
         public float Direction, HeadDirection, Neck, FootTime, StepDuration = .2f, Wait, TaskTime;
+        public float AutoIn = 20, NapIn = 180, BallCooldown, WaitOffscreen;
+        public readonly Queue<int> Deck = new Queue<int>();
+        public int DeliveryStage, DeliverySide;
+        public V ReturnPoint;
+        public DesktopObject Held, TargetObject;
+        public float Boldness = .5f, Sociability = .5f;
         public int MovingFoot = -1;
         public bool FeetReady, Swimming;
         public Coating Coating;
         public int TrailRemaining;
         public Activity Task = Activity.Wander;
-        public Goose(V p)
+        public Goose(V p, int id, string name)
         {
-            Pos = Target = p;
+            Pos = Target = Attention = p;
+            ReturnPoint = p;
+            Id = id;
+            Name = name;
             Direction = 0;
+        }
+
+        public Goose(V p) : this(p, 0, "White")
+        {
         }
 
         public void Place(V p)
@@ -68,6 +83,7 @@ namespace SecondHonk
         public ToyKind Kind;
         public V Pos, Size, Velocity;
         public bool Carried, Dragging;
+        public Goose Holder;
         public float Age, Cooldown;
         public bool Surface
         {

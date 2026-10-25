@@ -69,16 +69,23 @@ namespace SecondHonk
                 Assert(w.Marks.Count == 0, "Mud footprints expire completely");
                 w = New(content);
                 int started = 0, finished = 0;
+                Goose starter = null, finisher = null;
                 V windowStart = new V();
-                w.DeliveryStarted += () =>
+                w.DeliveryStarted += actor =>
                 {
                     started++;
-                    windowStart = w.Goose.Pos;
+                    starter = actor;
+                    windowStart = actor.Pos;
                 };
-                w.DeliveryCompleted += () => finished++;
+                w.DeliveryCompleted += actor =>
+                {
+                    finished++;
+                    finisher = actor;
+                };
                 w.Deliver(false);
                 Advance(w, 18);
                 Assert(started == 1 && finished == 1 && w.Deliveries == 1, "Note delivery completes its offscreen pickup and return");
+                Assert(starter == w.Goose && finisher == w.Goose, "Solo delivery events identify the white goose as the actor");
                 Assert(windowStart.X < 0 || windowStart.X > w.Width, "Note is created after the goose has walked beyond a desktop edge");
                 w = New(content);
                 w.Goose.Direction = w.Goose.HeadDirection = 0;
@@ -166,6 +173,7 @@ namespace SecondHonk
                 Extended(content);
                 PatchTests.Run(content, Assert);
                 BetaTests.Run(content, Assert);
+                EqualActorTests.Run(content, Assert);
                 results.Add("\nAll " + results.Count + " desktop checks passed. Windows " + Environment.OSVersion.Version + ".");
                 Environment.ExitCode = 0;
             }

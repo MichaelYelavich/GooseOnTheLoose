@@ -55,17 +55,17 @@ namespace SecondHonk
             tray.Text = "Goose on the Loose";
             tray.Visible = !testing;
             tray.DoubleClick += (s, e) => World.Call(Pointer());
-            World.Honked += audio.Play;
-            World.FootLanded += () =>
+            World.Honked += _ => audio.Play();
+            World.FootLanded += actor =>
             {
-                if (World.Goose.Task == Activity.Mud)
+                if (actor.Task == Activity.Mud)
                     audio.Mud();
                 else
                     audio.Step();
             };
-            World.CursorCaught += audio.Bite;
-            World.DeliveryStarted += BeginDelivery;
-            World.DeliveryCompleted += () => carried = null;
+            World.CursorCaught += _ => audio.Bite();
+            World.DeliveryStarted += actor => BeginDelivery(actor);
+            World.DeliveryCompleted += _ => carried = null;
             ChooseMonitor(settings.Monitor);
             World.Goose.Place(World.Clamp(new V(World.Width * .45f, World.Height * .68f)));
             World.Friend.Place(World.Clamp(World.Goose.Pos + new V(-80, 20)));
@@ -79,7 +79,7 @@ namespace SecondHonk
                 if (!testing && selected.WorkingArea != overlay.Area)
                     ChooseMonitor(World.Data.Monitor);
                 World.Goose.FeetReady = World.Friend.FeetReady = false;
-                World.GrabRemaining = 0;
+                World.ReleaseCursorAll();
             };
             timer.Interval = 33;
             timer.Tick += Tick;
@@ -148,11 +148,7 @@ namespace SecondHonk
             Item(mischief.DropDownItems, "Chase the cursor", () => World.Chase(Pointer()));
             Item(mischief.DropDownItems, "Track mud", World.MakeMud);
             menu.Items.Add(new ToolStripSeparator());
-            Toggle(menu.Items, "Paused                        Ctrl+Alt+P", () => World.Paused, v =>
-            {
-                World.Paused = v;
-                World.GrabRemaining = 0;
-            });
+            Toggle(menu.Items, "Paused                        Ctrl+Alt+P", () => World.Paused, v => World.SetPaused(v));
             Toggle(menu.Items, "Quiet mode                   Ctrl+Alt+K", () => World.Data.Quiet, SetQuiet);
             var options = new ToolStripMenuItem("Options");
             menu.Items.Add(options);
@@ -163,14 +159,10 @@ namespace SecondHonk
             {
                 World.Data.MouseSteal = v;
                 if (!v)
-                    World.Cancel();
+                    World.CancelAll();
             });
             Toggle(options.DropDownItems, "Random cursor attacks", () => World.Data.RandomAttacks, v => World.Data.RandomAttacks = v);
-            Toggle(options.DropDownItems, "A second goose", () => World.Data.Companion, v =>
-            {
-                World.Data.Companion = v;
-                World.Friend.Place(World.Clamp(World.Goose.Pos + new V(-70, 25)));
-            });
+            Toggle(options.DropDownItems, "A second goose", () => World.Data.Companion, v => World.SetCompanion(v));
             Item(options.DropDownItems, "Quiet for 25 minutes", () =>
             {
                 SetQuiet(true);
@@ -262,7 +254,7 @@ namespace SecondHonk
             Item(menu.Items, "Quit                            Ctrl+Alt+Q", ExitThread);
             menu.Opening += (s, e) =>
             {
-                World.GrabRemaining = 0;
+                World.ReleaseCursorAll();
                 tray.Text = World.Paused ? "Goose on the Loose — paused" : World.Data.Quiet ? "Goose on the Loose — quiet" : "Goose on the Loose";
             };
         }
@@ -371,12 +363,18 @@ namespace SecondHonk
             windows.Clear();
             carried = null;
             suppressRetaliation = false;
-            if (World.Goose.Task == Activity.Deliver)
-                World.Cancel();
+            World.CancelDelivery();
         }
 
-        internal async void BeginDelivery()
+        internal void BeginDelivery()
         {
+            BeginDelivery(World.Coordinator.DeliveryOwner ?? World.Goose);
+        }
+
+        internal async void BeginDelivery(Goose actor)
+        {
+            if (actor == null)
+                return;
             if (deliveryCancel != null)
             {
                 deliveryCancel.Cancel();
@@ -403,7 +401,7 @@ namespace SecondHonk
                     note = "Could not open that picture. Have a honk instead.";
                 }
 
-            if (exiting || revision != deliveryRevision || World.Data.Quiet || shutdown.Animating || (!String.IsNullOrEmpty(path) && World.Goose.Task != Activity.Deliver))
+            if (exiting || revision != deliveryRevision || World.Data.Quiet || shutdown.Animating || (!String.IsNullOrEmpty(path) && actor.Task != Activity.Deliver))
             {
                 if (prepared != null)
                     prepared.Dispose();
@@ -422,7 +420,7 @@ namespace SecondHonk
             var window = new GooseWindow(note, prepared);
             carried = window;
             windows.Add(window);
-            PlaceCarriedWindow();
+            PlaceCarriedWindow(actor);
             window.FormClosed += (s, e) =>
             {
                 if (!exiting && !suppressRetaliation && !World.Data.Quiet)
@@ -439,12 +437,13 @@ namespace SecondHonk
             window.Show();
         }
 
-        void PlaceCarriedWindow()
+        void PlaceCarriedWindow(Goose actor)
         {
             if (carried == null || carried.IsDisposed)
                 return;
-            V beak = World.Beak(World.Goose);
-            int x = overlay.Area.X + (int)beak.X - (World.DeliverySide < 0 ? carried.Width : 0), y = overlay.Area.Y + (int)beak.Y - carried.Height / 2;
+            V beak = World.Beak(actor ?? World.Goose);
+            int side = actor != null ? actor.DeliverySide : World.DeliverySide;
+            int x = overlay.Area.X + (int)beak.X - (side < 0 ? carried.Width : 0), y = overlay.Area.Y + (int)beak.Y - carried.Height / 2;
             carried.Location = new Point(x, y);
         }
 
@@ -540,10 +539,7 @@ namespace SecondHonk
 
             contentMonitor.Tick();
             if (modalDepth > 0)
-            {
-                World.Paused = true;
-                World.GrabRemaining = 0;
-            }
+                World.SetPaused(true);
 
             V pointer = Pointer();
             World.Pointer = pointer;
@@ -558,12 +554,13 @@ namespace SecondHonk
             World.Update(dt);
             if (World.HoldingCursor && !escape)
             {
-                V beak = World.Beak(World.Goose);
+                V beak = World.Beak(World.GrabOwner ?? World.Goose);
                 Native.SetCursorPos(overlay.Area.X + (int)beak.X, overlay.Area.Y + (int)beak.Y);
             }
 
-            if (World.Goose.Task == Activity.Deliver && World.DeliveryStage == 2)
-                PlaceCarriedWindow();
+            Goose delivering = World.Coordinator.DeliveryOwner;
+            if (delivering != null && delivering.Task == Activity.Deliver && delivering.DeliveryStage == 2)
+                PlaceCarriedWindow(delivering);
             try
             {
                 bool needsPaint = !World.Paused || !paintedPause || World.Editing || World.DismissRemaining > 0 || escape;
@@ -595,15 +592,17 @@ namespace SecondHonk
         {
             if (escape && !shutdown.Animating)
             {
-                World.GrabRemaining = 0;
+                World.ReleaseCursorAll();
                 if (World.Goose.Task == Activity.Chase)
-                    World.Cancel();
+                    World.Cancel(World.Goose);
+                if (World.Friend.Task == Activity.Chase)
+                    World.Cancel(World.Friend);
             }
 
             if (shutdown.Advance(escape, elapsed, World.Data.ReducedMotion))
             {
-                World.Cancel();
-                World.Paused = true;
+                World.CancelAll();
+                World.SetPaused(true);
                 ClearNotes();
                 toys.ReleaseDrag();
                 if (toolbox != null)
@@ -644,8 +643,7 @@ namespace SecondHonk
                 return;
             bool paused = World.Paused;
             modalDepth++;
-            World.Paused = true;
-            World.GrabRemaining = 0;
+            World.SetPaused(true);
             toys.ReleaseDrag();
             try
             {
@@ -662,8 +660,7 @@ namespace SecondHonk
                 modalDepth--;
                 if (!exiting)
                 {
-                    World.Paused = paused;
-                    World.GrabRemaining = 0;
+                    World.SetPaused(paused);
                     contentMonitor.Reload();
                 }
             }
@@ -684,6 +681,9 @@ namespace SecondHonk
                     GooseX = World.Goose.Pos.X,
                     GooseY = World.Goose.Pos.Y,
                     Task = World.Goose.Task.ToString(),
+                    FriendTask = World.Friend.Task.ToString(),
+                    GrabOwner = World.GrabOwner != null ? World.GrabOwner.Name : "",
+                    DeliveryOwner = World.Coordinator.DeliveryOwner != null ? World.Coordinator.DeliveryOwner.Name : "",
                     World.Paused,
                     World.Data.Quiet,
                     World.HoldingCursor,

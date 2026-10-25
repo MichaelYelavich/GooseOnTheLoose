@@ -10,19 +10,73 @@ namespace SecondHonk
     {
         public readonly SaveData Data;
         public readonly Content Content;
-        public readonly Goose Goose = new Goose(new V(350, 300)), Friend = new Goose(new V(270, 330));
+        public readonly Goose Goose = new Goose(new V(350, 300), 0, "White"), Friend = new Goose(new V(270, 330), 1, "Canada");
         public readonly List<Mark> Marks = new List<Mark>();
         public readonly List<DesktopObject> Objects = new List<DesktopObject>();
+        public readonly PlayCoordinator Coordinator = new PlayCoordinator();
         public Behavior Behavior = new Behavior();
         public bool Editing, Exploding;
         public float DismissRemaining, ExplosionTime;
         DesktopObject ball, stick;
         readonly Random random;
-        readonly Queue<int> deck = new Queue<int>();
         int noteIndex, imageIndex;
-        float autoIn = 20, ballCooldown, napIn = 180, waitOffscreen;
         public float Width = 1280, Height = 752, Time, GrabRemaining, QuietRemaining;
-        public V Pointer, ReturnPoint, GrabTarget;
+        public V Pointer, GrabTarget;
+        public bool Paused;
+        public int Meals, Fetches, Kicks, Deliveries;
+        public string DeliveryText = "", DeliveryImage = "";
+        public event Action<Goose> Honked, FootLanded, CursorCaught, DeliveryStarted, DeliveryCompleted;
+        public float Scale
+        {
+            get
+            {
+                return Data.Scale;
+            }
+        }
+
+        public float GooseScale(Goose goose)
+        {
+            return Scale * (goose == Friend ? .85f : 1);
+        }
+
+        public Goose GrabOwner
+        {
+            get
+            {
+                return Coordinator.CursorOwner;
+            }
+        }
+
+        public int DeliveryStage
+        {
+            get
+            {
+                Goose owner = Coordinator.DeliveryOwner;
+                return (owner ?? Goose).DeliveryStage;
+            }
+
+            set
+            {
+                Goose owner = Coordinator.DeliveryOwner;
+                (owner ?? Goose).DeliveryStage = value;
+            }
+        }
+
+        public int DeliverySide
+        {
+            get
+            {
+                Goose owner = Coordinator.DeliveryOwner;
+                return (owner ?? Goose).DeliverySide;
+            }
+
+            set
+            {
+                Goose owner = Coordinator.DeliveryOwner;
+                (owner ?? Goose).DeliverySide = value;
+            }
+        }
+
         public V BallPos
         {
             get
@@ -108,26 +162,11 @@ namespace SecondHonk
 
             set
             {
-                if (stick != null)
-                    stick.Carried = value;
+                if (stick != null && !value)
+                    Coordinator.ReleaseCarry(Goose.Held == stick ? Goose : Friend.Held == stick ? Friend : null, stick);
+                else if (stick != null && value)
+                    Coordinator.TryAcquireCarry(Goose, stick);
             }
-        }
-
-        public bool Paused;
-        public int DeliveryStage, DeliverySide, Meals, Fetches, Kicks, Deliveries;
-        public string DeliveryText = "", DeliveryImage = "";
-        public event Action Honked, FootLanded, CursorCaught, DeliveryStarted, DeliveryCompleted;
-        public float Scale
-        {
-            get
-            {
-                return Data.Scale;
-            }
-        }
-
-        public float GooseScale(Goose goose)
-        {
-            return Scale * (goose == Friend ? .85f : 1);
         }
 
         public bool HoldingCursor
@@ -143,13 +182,19 @@ namespace SecondHonk
             Data = data;
             Content = content;
             random = new Random(seed);
+            Goose.Boldness = .7f;
+            Goose.Sociability = .45f;
+            Friend.Boldness = .45f;
+            Friend.Sociability = .65f;
         }
 
         public void ApplyBehavior(Behavior behavior)
         {
             Behavior = behavior;
-            deck.Clear();
-            autoIn = behavior.PrankMinSeconds;
+            Goose.Deck.Clear();
+            Friend.Deck.Clear();
+            Goose.AutoIn = Behavior.PrankMinSeconds;
+            Friend.AutoIn = Behavior.PrankMinSeconds;
         }
 
         public V Clamp(V p)
@@ -180,12 +225,13 @@ namespace SecondHonk
             Goose.Place(Clamp(Goose.Pos));
             Friend.Place(Clamp(Friend.Pos));
             ClearProps();
-            Cancel();
+            Cancel(Goose);
         }
 
         public void ClearProps()
         {
-            Cancel();
+            CancelAll();
+            Coordinator.Clear();
             Objects.Clear();
             ball = stick = null;
             Marks.Clear();
@@ -196,23 +242,124 @@ namespace SecondHonk
 
         public void Cancel()
         {
-            SetTask(Activity.Wander);
+            CancelActor(Goose);
+        }
+
+        public void Cancel(Goose actor)
+        {
+            CancelActor(actor);
+        }
+
+        public void CancelAll()
+        {
+            CancelActor(Goose);
+            CancelActor(Friend);
+            ReleaseCursorAll();
+        }
+
+        public void CancelActor(Goose actor)
+        {
+            if (actor == null)
+                return;
+            if (actor.Task == Activity.Deliver)
+                Coordinator.ReleaseDelivery(actor);
+            SetTaskActor(actor, Activity.Wander);
+            if (Coordinator.CursorOwner == actor)
+            {
+                GrabRemaining = 0;
+                Coordinator.ReleaseCursor(actor);
+            }
+        }
+
+        public void CancelDelivery()
+        {
+            Goose owner = Coordinator.DeliveryOwner;
+            if (owner == null)
+                owner = Goose.Task == Activity.Deliver ? Goose : Friend.Task == Activity.Deliver ? Friend : null;
+            if (owner != null)
+                CancelActor(owner);
+        }
+
+        public void ReleaseCursorAll()
+        {
             GrabRemaining = 0;
+            Coordinator.CursorOwner = null;
+        }
+
+        public void ReleaseCursorFor(Goose actor)
+        {
+            if (actor == null)
+                return;
+            if (Coordinator.CursorOwner == null || Coordinator.CursorOwner == actor)
+            {
+                GrabRemaining = 0;
+                Coordinator.ReleaseCursor(actor);
+            }
         }
 
         public void SetTask(Activity task)
         {
-            if (task != Activity.Fetch && task != Activity.Return)
-                foreach (var o in Objects)
-                    o.Carried = false;
-            Goose.Task = task;
-            Goose.TaskTime = 0;
-            Goose.Wait = 0;
+            SetTaskActor(Goose, task);
+        }
+
+        public void SetTask(Goose actor, Activity task)
+        {
+            SetTaskActor(actor, task);
+        }
+
+        void SetTaskActor(Goose actor, Activity task)
+        {
+            if (actor == null)
+                return;
+            if (task != Activity.Fetch && task != Activity.Return && actor.Held != null)
+                Coordinator.ReleaseCarry(actor, actor.Held);
+            if (actor.TargetObject != null && actor.TargetObject != actor.Held)
+            {
+                Coordinator.Release(actor.TargetObject);
+                actor.TargetObject = null;
+            }
+
+            actor.Task = task;
+            actor.TaskTime = 0;
+            actor.Wait = 0;
             if (task == Activity.Deliver)
-                DeliveryStage = 0;
+                actor.DeliveryStage = 0;
         }
 
         public DesktopObject PlaceObject(ToyKind kind, V p)
+        {
+            var o = PlaceObjectRaw(kind, p);
+            if (o == null)
+                return null;
+            if (kind == ToyKind.Ball)
+            {
+                ball = o;
+                SetTaskActor(Goose, Activity.Ball);
+                if (Coordinator.TryReserve(o, Goose))
+                    Goose.TargetObject = o;
+            }
+
+            if (kind == ToyKind.Stick)
+            {
+                Coordinator.ReleaseCarry(Goose, Goose.Held);
+                Coordinator.ReleaseCarry(Friend, Friend.Held);
+                stick = o;
+                Goose.ReturnPoint = Goose.Pos;
+                SetTaskActor(Goose, Activity.Fetch);
+                if (Coordinator.TryReserve(o, Goose))
+                    Goose.TargetObject = o;
+            }
+
+            if (kind == ToyKind.Peas)
+            {
+                ReleaseCursorFor(Goose);
+                SetTaskActor(Goose, Activity.Eat);
+            }
+
+            return o;
+        }
+
+        public DesktopObject PlaceObjectRaw(ToyKind kind, V p)
         {
             if (Objects.Count >= 16)
                 return null;
@@ -224,73 +371,142 @@ namespace SecondHonk
             };
             o.Pos = ConstrainObject(o, p);
             Objects.Add(o);
-            if (kind == ToyKind.Ball)
-            {
-                ball = o;
-                SetTask(Activity.Ball);
-            }
-
-            if (kind == ToyKind.Stick)
-            {
-                foreach (var existing in Objects)
-                    existing.Carried = false;
-                stick = o;
-                ReturnPoint = Goose.Pos;
-                SetTask(Activity.Fetch);
-            }
-
-            if (kind == ToyKind.Peas)
-            {
-                GrabRemaining = 0;
-                SetTask(Activity.Eat);
-            }
-
             return o;
         }
 
         public void RemoveObject(DesktopObject o)
         {
+            if (o == null)
+                return;
             Objects.Remove(o);
+            Coordinator.Release(o);
             if (o == ball)
                 ball = null;
             if (o == stick)
-            {
                 stick = null;
-                Cancel();
+            foreach (var actor in new[] { Goose, Friend })
+            {
+                if (actor.TargetObject == o)
+                    actor.TargetObject = null;
+                if (actor.Held == o)
+                    actor.Held = null;
+                if (actor.Task == Activity.Ball || actor.Task == Activity.Fetch || actor.Task == Activity.Return || actor.Task == Activity.Eat)
+                    CancelActor(actor);
+            }
+        }
+
+        public void OnObjectDragged(DesktopObject o)
+        {
+            if (o == null)
+                return;
+            ReleaseCursorAll();
+            Coordinator.Release(o);
+            if (o == ball)
+                ball = null;
+            if (o == stick)
+                stick = null;
+            foreach (var actor in new[] { Goose, Friend })
+            {
+                if (actor.TargetObject == o)
+                    actor.TargetObject = null;
+                if (actor.Held == o)
+                    actor.Held = null;
+                if (actor.Task == Activity.Ball || actor.Task == Activity.Fetch || actor.Task == Activity.Return || actor.Task == Activity.Eat)
+                    CancelActor(actor);
+            }
+        }
+
+        public void SetCompanion(bool enabled)
+        {
+            Data.Companion = enabled;
+            if (!enabled)
+            {
+                Coordinator.ReleaseAllFor(Friend);
+                SetTaskActor(Friend, Activity.Wander);
+                Friend.Target = Friend.Pos;
+            }
+            else
+            {
+                Friend.Place(Clamp(Goose.Pos + new V(-70, 25)));
+                SetTaskActor(Friend, Activity.Wander);
+            }
+        }
+
+        public void SetPaused(bool paused)
+        {
+            if (Paused == paused)
+            {
+                if (paused)
+                    ReleaseCursorAll();
+                return;
+            }
+
+            Paused = paused;
+            ReleaseCursorAll();
+            if (paused)
+            {
+                Coordinator.ReleaseUnpossessed();
+                foreach (var actor in new[] { Goose, Friend })
+                    if (actor.TargetObject != null && Coordinator.OwnerOf(actor.TargetObject) != actor)
+                        actor.TargetObject = null;
             }
         }
 
         public void Honk()
         {
+            Honk(Goose);
+        }
+
+        public void Honk(Goose actor)
+        {
+            if (actor == null)
+                return;
             if (!Data.Quiet && Data.Sound && Honked != null)
-                Honked();
+                Honked(actor);
         }
 
         public void Chase(V p)
         {
-            if (Paused || Data.Quiet)
+            Chase(Goose, p);
+        }
+
+        public void Chase(Goose actor, V p)
+        {
+            if (actor == null || Paused || Data.Quiet)
                 return;
             Pointer = Clamp(p);
-            GrabRemaining = 0;
-            SetTask(Activity.Chase);
-            Honk();
+            ReleaseCursorFor(actor);
+            SetTaskActor(actor, Activity.Chase);
+            Honk(actor);
         }
 
         public void Follow(V p)
         {
-            if (Paused)
+            Follow(Goose, p);
+        }
+
+        public void Follow(Goose actor, V p)
+        {
+            if (actor == null || Paused)
                 return;
             Pointer = Clamp(p);
-            GrabRemaining = 0;
-            SetTask(Activity.Follow);
+            ReleaseCursorFor(actor);
+            SetTaskActor(actor, Activity.Follow);
         }
 
         public void Call(V p)
         {
-            GrabRemaining = 0;
-            SetTask(Activity.Follow);
+            Call(Goose, p);
+        }
+
+        public void Call(Goose actor, V p)
+        {
+            if (actor == null)
+                return;
+            ReleaseCursorFor(actor);
+            SetTaskActor(actor, Activity.Follow);
             Pointer = Clamp(p);
-            Honk();
+            Honk(actor);
         }
 
         public void Feed(V p)
@@ -300,57 +516,123 @@ namespace SecondHonk
             PlaceObject(ToyKind.Peas, p);
         }
 
+        public void Feed(Goose actor, V p)
+        {
+            if (actor == null || Paused)
+                return;
+            var o = PlaceObjectRaw(ToyKind.Peas, p);
+            if (o == null)
+                return;
+            ReleaseCursorFor(actor);
+            SetTaskActor(actor, Activity.Eat);
+        }
+
         public void ThrowBall(V p)
         {
-            if (Paused || Data.Quiet)
+            ThrowBall(Goose, p);
+        }
+
+        public void ThrowBall(Goose actor, V p)
+        {
+            if (actor == null || Paused || Data.Quiet)
                 return;
-            GrabRemaining = 0;
-            var o = PlaceObject(ToyKind.Ball, p);
+            ReleaseCursorFor(actor);
+            DesktopObject o;
+            if (actor == Goose)
+            {
+                o = PlaceObject(ToyKind.Ball, p);
+            }
+            else
+            {
+                o = PlaceObjectRaw(ToyKind.Ball, p);
+                if (o != null)
+                {
+                    SetTaskActor(actor, Activity.Ball);
+                    if (Coordinator.TryReserve(o, actor))
+                        actor.TargetObject = o;
+                }
+            }
+
             if (o != null)
                 o.Velocity = new V(random.Next(-80, 81), random.Next(-80, 81));
-            ballCooldown = 0;
-            Honk();
+            actor.BallCooldown = 0;
+            Honk(actor);
         }
 
         public void Fetch(V p)
         {
-            if (Paused || Data.Quiet)
+            Fetch(Goose, p);
+        }
+
+        public void Fetch(Goose actor, V p)
+        {
+            if (actor == null || Paused || Data.Quiet)
                 return;
-            GrabRemaining = 0;
-            PlaceObject(ToyKind.Stick, p);
-            Honk();
+            ReleaseCursorFor(actor);
+            if (actor == Goose)
+            {
+                PlaceObject(ToyKind.Stick, p);
+            }
+            else
+            {
+                var o = PlaceObjectRaw(ToyKind.Stick, p);
+                if (o != null)
+                {
+                    actor.ReturnPoint = actor.Pos;
+                    SetTaskActor(actor, Activity.Fetch);
+                    if (Coordinator.TryReserve(o, actor))
+                        actor.TargetObject = o;
+                }
+            }
+
+            Honk(actor);
         }
 
         public void MakeMud()
         {
-            if (Paused || Data.Quiet)
+            MakeMud(Goose);
+        }
+
+        public void MakeMud(Goose actor)
+        {
+            if (actor == null || Paused || Data.Quiet)
                 return;
-            GrabRemaining = 0;
-            Goose.Coating = Coating.Mud;
-            Goose.TrailRemaining = Behavior.TrailSteps;
-            SetTask(Activity.Mud);
-            Goose.Target = RandomPoint();
-            Honk();
+            ReleaseCursorFor(actor);
+            actor.Coating = Coating.Mud;
+            actor.TrailRemaining = Behavior.TrailSteps;
+            SetTaskActor(actor, Activity.Mud);
+            actor.Target = RandomPoint();
+            Honk(actor);
         }
 
         public void Deliver(bool image)
         {
-            if (Paused || Data.Quiet)
+            Deliver(Goose, image);
+        }
+
+        public void Deliver(Goose actor, bool image)
+        {
+            if (actor == null || Paused || Data.Quiet)
                 return;
-            GrabRemaining = 0;
+            if (Coordinator.DeliveryOwner != null && Coordinator.DeliveryOwner != actor)
+                return;
+            if (!Coordinator.TryAcquireDelivery(actor))
+                return;
+            ReleaseCursorFor(actor);
             DeliveryText = Content.Notes.Count == 0 ? "Have a honk." : Content.Notes[(noteIndex++ & int.MaxValue) % Content.Notes.Count];
             DeliveryImage = image && Content.Images.Count > 0 ? Content.Images[(imageIndex++ & int.MaxValue) % Content.Images.Count] : "";
-            DeliverySide = Goose.Pos.X < Width / 2 ? -1 : 1;
-            SetTask(Activity.Deliver);
-            Goose.Target = new V(DeliverySide < 0 ? -75 * Scale : Width + 75 * Scale, Math.Max(120 * Scale, Math.Min(Height - 100 * Scale, Goose.Pos.Y)));
-            Honk();
+            actor.DeliverySide = actor.Pos.X < Width / 2 ? -1 : 1;
+            SetTaskActor(actor, Activity.Deliver);
+            actor.Target = new V(actor.DeliverySide < 0 ? -75 * Scale : Width + 75 * Scale, Math.Max(120 * Scale, Math.Min(Height - 100 * Scale, actor.Pos.Y)));
+            Honk(actor);
         }
 
         public void SetQuiet(bool quiet)
         {
             Data.Quiet = quiet;
             QuietRemaining = 0;
-            Cancel();
+            ReleaseCursorAll();
+            CancelAll();
         }
 
         V RandomPoint()
@@ -358,9 +640,9 @@ namespace SecondHonk
             return Clamp(new V((float)random.NextDouble() * Width, (float)random.NextDouble() * Height));
         }
 
-        void ChooseActivity()
+        void ChooseActivity(Goose actor)
         {
-            if (deck.Count == 0)
+            if (actor.Deck.Count == 0)
             {
                 var choices = new List<int>();
                 int[] weights =
@@ -379,33 +661,43 @@ namespace SecondHonk
                 while (choices.Count > 0)
                 {
                     int i = random.Next(choices.Count);
-                    deck.Enqueue(choices[i]);
+                    actor.Deck.Enqueue(choices[i]);
                     choices.RemoveAt(i);
                 }
             }
 
-            switch (deck.Dequeue())
+            switch (actor.Deck.Dequeue())
             {
                 case 0:
-                    MakeMud();
+                    MakeMud(actor);
                     break;
                 case 1:
-                    Deliver(false);
+                    Deliver(actor, false);
                     break;
                 case 2:
-                    Deliver(true);
+                    Deliver(actor, true);
                     break;
                 case 3:
                     if (Data.RandomAttacks)
-                        Chase(Pointer);
+                        Chase(actor, Pointer);
                     break;
                 case 4:
-                    ball = Objects.Where(o => o.Kind == ToyKind.Ball && !o.Dragging).OrderBy(o => V.Distance(Goose.Pos, o.Pos)).FirstOrDefault();
-                    if (BallVisible)
-                        SetTask(Activity.Ball);
-                    else if (Data.Companion)
+                    DesktopObject found = null;
+                    if (actor.TargetObject != null && actor.TargetObject.Kind == ToyKind.Ball && Objects.Contains(actor.TargetObject) && !actor.TargetObject.Dragging && !Coordinator.IsReservedByOther(actor.TargetObject, actor))
+                        found = actor.TargetObject;
+                    else
+                        found = Objects.Where(o => o.Kind == ToyKind.Ball && !o.Dragging && !Coordinator.IsReservedByOther(o, actor)).OrderBy(o => V.Distance(actor.Pos, o.Pos)).FirstOrDefault();
+                    if (found != null)
                     {
-                        SetTask(Activity.Follow);
+                        if (actor == Goose)
+                            ball = found;
+                        Coordinator.TryReserve(found, actor);
+                        actor.TargetObject = found;
+                        SetTaskActor(actor, Activity.Ball);
+                    }
+                    else if (actor == Goose && Data.Companion)
+                    {
+                        SetTaskActor(actor, Activity.Follow);
                         Pointer = Friend.Pos;
                     }
 
@@ -436,6 +728,7 @@ namespace SecondHonk
             float headTarget = g.Direction;
             if (V.Distance(Pointer, g.Pos) < 140 * Scale && !HoldingCursor && g.Task != Activity.Deliver)
                 headTarget = V.Turn(g.Direction, V.Angle(Pointer - g.Pos), .65f);
+            g.Attention = V.Distance(Pointer, g.Pos) < 140 * Scale && g.Task != Activity.Deliver ? Pointer : target;
             g.HeadDirection = V.Turn(g.HeadDirection, headTarget, dt * 5);
             float neckTarget = g.Task == Activity.Chase || g.Task == Activity.Fetch || g.Task == Activity.Return ? 1 : 0;
             g.Neck += (neckTarget - g.Neck) * Math.Min(1, dt * 6);
@@ -487,7 +780,7 @@ namespace SecondHonk
                 {
                     LandFoot(g, foot);
                     if (!g.Swimming && Data.Sound && !Data.Quiet && FootLanded != null)
-                        FootLanded();
+                        FootLanded(g);
                     g.MovingFoot = -1;
                 }
             }
@@ -541,10 +834,15 @@ namespace SecondHonk
             dt = Math.Max(0, Math.Min(.1f, dt));
             AdvanceQuiet(dt);
             if (!Data.MouseSteal)
+            {
                 GrabRemaining = 0;
+                Coordinator.CursorOwner = null;
+            }
+
             if (Paused)
             {
                 GrabRemaining = 0;
+                Coordinator.CursorOwner = null;
                 if (!Goose.FeetReady)
                     SolveFeet(Goose, 0);
                 if (Data.Companion && !Friend.FeetReady)
@@ -554,7 +852,12 @@ namespace SecondHonk
 
             Time += dt;
             Goose.TaskTime += dt;
-            ballCooldown -= dt;
+            if (Data.Companion)
+                Friend.TaskTime += dt;
+            Goose.BallCooldown -= dt;
+            if (Data.Companion)
+                Friend.BallCooldown -= dt;
+            Coordinator.Update(dt);
             for (int i = Marks.Count - 1; i >= 0; i--)
             {
                 Marks[i].Age += dt;
@@ -601,211 +904,246 @@ namespace SecondHonk
                         }
             }
 
-            if (Data.Quiet && (Goose.Task == Activity.Chase || Goose.Task == Activity.Mud || Goose.Task == Activity.Deliver || Goose.Task == Activity.Fetch || Goose.Task == Activity.Ball))
-                Cancel();
-            V target = Goose.Pos;
+            if (Data.Quiet)
+                foreach (var actor in Data.Companion ? new[] { Goose, Friend } : new[] { Goose })
+                    if (actor.Task == Activity.Chase || actor.Task == Activity.Mud || actor.Task == Activity.Deliver || actor.Task == Activity.Fetch || actor.Task == Activity.Ball)
+                        CancelActor(actor);
+            StepActor(Goose, dt);
+            if (Data.Companion)
+                StepActor(Friend, dt);
+        }
+
+        void StepActor(Goose actor, float dt)
+        {
+            V target = actor.Pos;
             float speed = 80;
             bool offscreen = false;
-            switch (Goose.Task)
+            switch (actor.Task)
             {
                 case Activity.Wander:
-                    if (V.Distance(Goose.Pos, Goose.Target) < 10 * Scale)
+                    if (V.Distance(actor.Pos, actor.Target) < 10 * Scale)
                     {
-                        Goose.Wait -= dt;
-                        if (Goose.Wait <= 0)
+                        actor.Wait -= dt;
+                        if (actor.Wait <= 0)
                         {
-                            Goose.Target = RandomPoint();
-                            Goose.Wait = 1 + (float)random.NextDouble() * 2;
+                            actor.Target = RandomPoint();
+                            actor.Wait = 1 + (float)random.NextDouble() * 2;
                         }
                     }
 
-                    target = Goose.Target;
-                    autoIn -= dt;
-                    napIn -= dt;
+                    target = actor.Target;
+                    actor.AutoIn -= dt;
+                    actor.NapIn -= dt;
                     if (Objects.Any(o => o.Kind == ToyKind.Peas))
-                        SetTask(Activity.Eat);
-                    else if (autoIn <= 0)
+                        SetTaskActor(actor, Activity.Eat);
+                    else if (actor.AutoIn <= 0)
                     {
-                        autoIn = Behavior.PrankMinSeconds + (float)random.NextDouble() * (Behavior.PrankMaxSeconds - Behavior.PrankMinSeconds);
+                        actor.AutoIn = Behavior.PrankMinSeconds + (float)random.NextDouble() * (Behavior.PrankMaxSeconds - Behavior.PrankMinSeconds);
                         if (Data.Mischief && !Data.Quiet)
-                            ChooseActivity();
+                            ChooseActivity(actor);
                     }
 
-                    if (napIn <= 0)
+                    if (actor.NapIn <= 0)
                     {
-                        napIn = 180 + random.Next(180);
-                        SetTask(Activity.Sleep);
-                        Goose.Target = new V(Width - 70 * Scale, Height - 30 * Scale);
+                        actor.NapIn = 180 + random.Next(180);
+                        SetTaskActor(actor, Activity.Sleep);
+                        actor.Target = new V(Width - 70 * Scale, Height - 30 * Scale);
+                    }
+
+                    if (actor == Friend && actor.Task == Activity.Wander)
+                    {
+                        V follow = Goose.Pos - V.Direction(Goose.Direction) * (65 * Scale) + new V(0, 15 * Scale);
+                        float comfort = 40 + 60 * actor.Sociability;
+                        if (V.Distance(actor.Pos, follow) > comfort * Scale)
+                        {
+                            target = follow;
+                            speed = 140;
+                        }
                     }
 
                     break;
                 case Activity.Chase:
                     speed = 400;
-                    if (HoldingCursor)
+                    if (HoldingCursor && Coordinator.CursorOwner == actor)
                     {
                         GrabRemaining -= dt;
                         target = GrabTarget;
-                        if (GrabRemaining <= 0 || V.Distance(Goose.Pos, target) < 20 * Scale)
-                            Cancel();
+                        if (GrabRemaining <= 0)
+                            CancelActor(actor);
+                        else if (V.Distance(actor.Pos, target) < 20 * Scale)
+                            CancelActor(actor);
                     }
                     else
                     {
-                        target = Clamp(Pointer - (Beak(Goose) - Goose.Pos));
-                        if (Data.MouseSteal && Goose.TaskTime < 9 && V.Distance(Beak(Goose), Pointer) < 18 * Scale)
+                        target = Clamp(Pointer - (Beak(actor) - actor.Pos));
+                        if (Data.MouseSteal && actor.TaskTime < 9 && V.Distance(Beak(actor), Pointer) < 18 * Scale && (Coordinator.CursorOwner == null || Coordinator.CursorOwner == actor))
                         {
+                            Coordinator.TryAcquireCursor(actor);
                             GrabRemaining = 1.4f;
-                            GrabTarget = Clamp(Goose.Pos + V.Direction((float)random.NextDouble() * 6.28f) * (340 * Scale));
+                            GrabTarget = Clamp(actor.Pos + V.Direction((float)random.NextDouble() * 6.28f) * (340 * Scale));
                             if (Data.Sound && CursorCaught != null)
-                                CursorCaught();
+                                CursorCaught(actor);
                         }
 
-                        if (Goose.TaskTime > 9)
-                            Cancel();
+                        if (actor.TaskTime > 9)
+                            CancelActor(actor);
                     }
 
                     break;
                 case Activity.Follow:
                     target = Pointer;
                     speed = 160;
-                    if (Goose.TaskTime > 8)
-                        Cancel();
+                    if (actor.TaskTime > 8)
+                        CancelActor(actor);
                     break;
                 case Activity.Eat:
-                    DesktopObject pea = Objects.Where(o => o.Kind == ToyKind.Peas && !o.Dragging).OrderBy(p => V.Distance(p.Pos, Goose.Pos)).FirstOrDefault();
+                    DesktopObject pea = null;
+                    if (actor.TargetObject != null && actor.TargetObject.Kind == ToyKind.Peas && Objects.Contains(actor.TargetObject) && !actor.TargetObject.Dragging && !Coordinator.IsReservedByOther(actor.TargetObject, actor))
+                        pea = actor.TargetObject;
+                    else
+                        pea = Objects.Where(o => o.Kind == ToyKind.Peas && !o.Dragging && !Coordinator.IsReservedByOther(o, actor)).OrderBy(p => V.Distance(p.Pos, actor.Pos)).FirstOrDefault();
                     if (pea == null)
                     {
-                        Cancel();
+                        CancelActor(actor);
                         break;
                     }
 
+                    Coordinator.TryReserve(pea, actor);
+                    actor.TargetObject = pea;
                     target = pea.Pos;
                     speed = Behavior.ToyApproachSpeed;
-                    if (V.Distance(Beak(Goose), target) < 35 * Scale || V.Distance(Goose.Pos, target) < 12 * Scale)
+                    if (V.Distance(Beak(actor), target) < 35 * Scale || V.Distance(actor.Pos, target) < 12 * Scale)
                     {
                         Objects.Remove(pea);
+                        Coordinator.Release(pea);
+                        actor.TargetObject = null;
                         Meals++;
                     }
 
                     break;
                 case Activity.Ball:
-                    if (!BallVisible || Goose.TaskTime > 18)
+                    DesktopObject toy = null;
+                    if (actor.TargetObject != null && actor.TargetObject.Kind == ToyKind.Ball && Objects.Contains(actor.TargetObject) && !actor.TargetObject.Dragging && !Coordinator.IsReservedByOther(actor.TargetObject, actor))
+                        toy = actor.TargetObject;
+                    else
+                        toy = Objects.Where(o => o.Kind == ToyKind.Ball && !o.Dragging && !Coordinator.IsReservedByOther(o, actor)).OrderBy(o => V.Distance(actor.Pos, o.Pos)).FirstOrDefault();
+                    if (toy == null || actor.TaskTime > 18)
                     {
                         ball = Objects.FirstOrDefault(o => o.Kind == ToyKind.Ball && !o.Dragging);
-                        Cancel();
+                        CancelActor(actor);
                         break;
                     }
 
-                    if (ball.Dragging)
+                    Coordinator.TryReserve(toy, actor);
+                    actor.TargetObject = toy;
+                    ball = toy;
+                    if (toy.Dragging)
                         break;
-                    target = Clamp(BallPos - (Beak(Goose) - Goose.Pos));
+                    target = Clamp(toy.Pos - (Beak(actor) - actor.Pos));
                     speed = Behavior.ToyApproachSpeed;
-                    if ((V.Distance(Beak(Goose), BallPos) < 28 * Scale || V.Distance(Goose.Pos, BallPos) < 24 * Scale) && ballCooldown <= 0)
+                    if ((V.Distance(Beak(actor), toy.Pos) < 28 * Scale || V.Distance(actor.Pos, toy.Pos) < 24 * Scale) && actor.BallCooldown <= 0)
                     {
-                        BallVelocity = (BallPos - Goose.Pos).Unit * (260 * Scale);
-                        ballCooldown = 1;
+                        toy.Velocity = (toy.Pos - actor.Pos).Unit * (260 * Scale);
+                        actor.BallCooldown = 1;
                         Kicks++;
-                        Honk();
+                        Honk(actor);
                     }
 
                     break;
                 case Activity.Fetch:
-                    if (!StickVisible)
+                    DesktopObject fetch = null;
+                    if (actor.TargetObject != null && actor.TargetObject.Kind == ToyKind.Stick && Objects.Contains(actor.TargetObject) && !actor.TargetObject.Dragging && !Coordinator.IsReservedByOther(actor.TargetObject, actor))
+                        fetch = actor.TargetObject;
+                    else
+                        fetch = Objects.Where(o => o.Kind == ToyKind.Stick && !o.Dragging && !Coordinator.IsReservedByOther(o, actor)).OrderBy(o => V.Distance(actor.Pos, o.Pos)).FirstOrDefault();
+                    if (fetch == null)
                     {
-                        Cancel();
+                        CancelActor(actor);
                         break;
                     }
 
-                    target = StickPos;
+                    Coordinator.TryReserve(fetch, actor);
+                    actor.TargetObject = fetch;
+                    stick = fetch;
+                    target = fetch.Pos;
                     speed = Behavior.ToyApproachSpeed;
-                    if (!stick.Dragging && V.Distance(Goose.Pos, target) < 25 * Scale)
+                    if (!fetch.Dragging && V.Distance(actor.Pos, target) < 25 * Scale)
                     {
-                        CarryingStick = true;
-                        SetTask(Activity.Return);
+                        if (Coordinator.TryAcquireCarry(actor, fetch))
+                            SetTaskActor(actor, Activity.Return);
+                        else
+                            CancelActor(actor);
                     }
 
                     break;
                 case Activity.Return:
-                    target = ReturnPoint;
+                    target = actor.ReturnPoint;
                     speed = 180;
-                    if (stick != null)
-                        stick.Pos = Beak(Goose);
-                    if (V.Distance(Goose.Pos, target) < 18 * Scale)
+                    DesktopObject held = actor.Held;
+                    if (held == null)
+                    {
+                        CancelActor(actor);
+                        break;
+                    }
+
+                    held.Pos = Beak(actor);
+                    stick = held;
+                    if (V.Distance(actor.Pos, target) < 18 * Scale)
                     {
                         Fetches++;
-                        if (stick != null)
-                        {
-                            stick.Carried = false;
-                            stick.Pos = Clamp(Beak(Goose));
-                        }
-
-                        Cancel();
-                        Honk();
+                        Coordinator.ReleaseCarry(actor, held);
+                        held.Pos = Clamp(Beak(actor));
+                        CancelActor(actor);
+                        Honk(actor);
                     }
 
                     break;
                 case Activity.Mud:
-                    target = Goose.Target;
+                    target = actor.Target;
                     speed = 200;
-                    if (V.Distance(Goose.Pos, target) < 30 * Scale)
-                        Goose.Target = RandomPoint();
-                    if (Goose.TaskTime > 12)
-                        Cancel();
+                    if (V.Distance(actor.Pos, target) < 30 * Scale)
+                        actor.Target = RandomPoint();
+                    if (actor.TaskTime > 12)
+                        CancelActor(actor);
                     break;
                 case Activity.Deliver:
                     offscreen = true;
-                    target = Goose.Target;
-                    if (DeliveryStage == 0 && V.Distance(Goose.Pos, target) < 20 * Scale)
+                    target = actor.Target;
+                    if (actor.DeliveryStage == 0 && V.Distance(actor.Pos, target) < 20 * Scale)
                     {
-                        DeliveryStage = 1;
-                        waitOffscreen = .8f;
+                        actor.DeliveryStage = 1;
+                        actor.WaitOffscreen = .8f;
                     }
-                    else if (DeliveryStage == 1)
+                    else if (actor.DeliveryStage == 1)
                     {
-                        waitOffscreen -= dt;
-                        if (waitOffscreen <= 0)
+                        actor.WaitOffscreen -= dt;
+                        if (actor.WaitOffscreen <= 0)
                         {
-                            DeliveryStage = 2;
-                            Goose.Target = Clamp(new V(Width * (DeliverySide < 0 ? .48f : .52f), Height * .55f));
+                            actor.DeliveryStage = 2;
+                            actor.Target = Clamp(new V(Width * (actor.DeliverySide < 0 ? .48f : .52f), Height * .55f));
                             if (DeliveryStarted != null)
-                                DeliveryStarted();
+                                DeliveryStarted(actor);
                         }
                     }
-                    else if (DeliveryStage == 2 && V.Distance(Goose.Pos, target) < 15 * Scale)
+                    else if (actor.DeliveryStage == 2 && V.Distance(actor.Pos, target) < 15 * Scale)
                     {
                         Deliveries++;
-                        Cancel();
+                        Coordinator.ReleaseDelivery(actor);
+                        CancelActor(actor);
                         if (DeliveryCompleted != null)
-                            DeliveryCompleted();
+                            DeliveryCompleted(actor);
                     }
 
                     break;
                 case Activity.Sleep:
-                    target = Goose.Target;
+                    target = actor.Target;
                     speed = 55;
-                    if (Goose.TaskTime > 25)
-                        Cancel();
+                    if (actor.TaskTime > 25)
+                        CancelActor(actor);
                     break;
             }
 
-            Move(Goose, target, speed, dt, offscreen);
-            if (Data.Companion)
-            {
-                V follow = Goose.Pos - V.Direction(Goose.Direction) * (65 * Scale) + new V(0, 15 * Scale);
-                var snack = Objects.FirstOrDefault(o => o.Kind == ToyKind.Peas && !o.Dragging);
-                if (snack != null)
-                {
-                    follow = snack.Pos;
-                    if (V.Distance(Friend.Pos, follow) < 25 * Scale)
-                    {
-                        Objects.Remove(snack);
-                        Meals++;
-                    }
-                }
-
-                if (V.Distance(Friend.Pos, follow) < 18 * Scale)
-                    follow = Friend.Pos;
-                Move(Friend, follow, 140, dt, false);
-            }
+            Move(actor, target, speed, dt, offscreen);
         }
     }
 }
