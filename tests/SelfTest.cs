@@ -91,9 +91,9 @@ namespace SecondHonk
                 w.Goose.Direction = w.Goose.HeadDirection = 0;
                 w.Chase(w.Beak(w.Goose));
                 w.Update(.01f);
-                Assert(w.HoldingCursor, "Provoked chase catches the cursor at the beak");
-                Advance(w, 2);
-                Assert(!w.HoldingCursor, "Cursor theft releases within its bounded time");
+                Assert(w.Goose.Task == Activity.Chase && !w.HoldingCursor && w.Coordinator.CursorOwner == null, "Provoked chase pursues without capturing the cursor");
+                Advance(w, 10);
+                Assert(!w.HoldingCursor && w.Coordinator.CursorOwner == null, "A chase never captures the cursor outside Chaos");
                 w = New(content);
                 w.Chase(w.Beak(w.Goose));
                 w.Update(.01f);
@@ -111,19 +111,22 @@ namespace SecondHonk
                 Advance(w, 3);
                 Assert(V.Distance(p, w.Goose.Pos) == 0 && !w.HoldingCursor, "Pause stops simulation and releases the cursor");
                 w = New(content);
-                w.SetQuiet(true);
-                w.MakeMud();
+                w.Data.Companion = true;
+                w.Data.Mischief = true;
+                w.Data.RandomAttacks = true;
+                w.SetMode("Passive");
+                Advance(w, 30);
+                Assert(w.Deliveries == 0 && !w.HoldingCursor && w.Coordinator.CursorOwner == null && w.Coordinator.WindowOwner == null, "Passive stops automatic deliveries and cursor or window interference");
+                w.ThrowBall(w.Goose.Pos + new V(90, 0));
                 w.Deliver(false);
-                w.ThrowBall(w.Goose.Pos);
-                w.Chase(w.Goose.Pos);
-                Advance(w, 3);
-                Assert(w.Marks.Count == 0 && !w.BallVisible && !w.HoldingCursor && w.Deliveries == 0, "Quiet mode suppresses desktop pranks");
+                Advance(w, 20);
+                Assert(w.Kicks > 0 && w.Deliveries == 1 && w.Coordinator.DeliveryOwner == null, "Explicit play and deliveries still work in Passive");
                 w = New(content);
                 w.SetQuiet(true);
                 w.QuietRemaining = 1;
                 w.Paused = true;
                 Advance(w, 2);
-                Assert(!w.Data.Quiet, "Timed quiet mode expires while paused");
+                Assert(!w.Data.Quiet, "Timed Passive expires while paused");
                 w = New(content);
                 w.Data.Companion = true;
                 w.Friend.Place(w.Goose.Pos - new V(180, 0));
@@ -174,6 +177,7 @@ namespace SecondHonk
                 PatchTests.Run(content, Assert);
                 BetaTests.Run(content, Assert);
                 EqualActorTests.Run(content, Assert);
+                SocialModeTests.Run(content, Assert);
                 results.Add("\nAll " + results.Count + " desktop checks passed. Windows " + Environment.OSVersion.Version + ".");
                 Environment.ExitCode = 0;
             }
@@ -195,7 +199,7 @@ namespace SecondHonk
         {
             var w = New(content);
             for (int i = 0; i < 16; i++)
-                w.PlaceObject((ToyKind)(i % 7), new V(150 + i * 55, 300));
+                w.PlaceObject((ToyKind)(i % 8), new V(150 + i * 55, 300));
             Assert(w.Objects.Count == 16 && w.PlaceObject(ToyKind.Ball, new V(300, 300)) == null, "Sixteen-object cap rejects further placements");
             Assert(w.Objects.Select(o => o.Id).Distinct().Count() == 16, "Placed objects have independent stable IDs");
             var first = w.Objects[0];
@@ -451,7 +455,7 @@ namespace SecondHonk
                 w.Data.Companion = true;
                 w.Editing = true;
                 for (int i = 0; i < 16; i++)
-                    w.PlaceObject((ToyKind)(i % 7), new V(120 + (i % 5) * 210, 150 + (i / 5) * 160));
+                    w.PlaceObject((ToyKind)(i % 8), new V(120 + (i % 5) * 210, 150 + (i / 5) * 160));
                 using (var bg = new DesktopOverlay(w, new Rectangle(-10000, -10000, 1280, 752)))
                 using (var toys = new DesktopOverlay(w, new Rectangle(-10000, -10000, 1280, 752), true))
                 {

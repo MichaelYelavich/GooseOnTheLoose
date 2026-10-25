@@ -226,6 +226,23 @@ namespace SecondHonk
                 return;
             }
 
+            if (o.Kind == ToyKind.Rope)
+            {
+                float span = Math.Max(20, o.Size.X / 2 - 6);
+                V a = p - new V(span, 0), b = p + new V(span, 0);
+                for (int i = 0; i <= 8; i++)
+                {
+                    float t = i / 8f;
+                    V q = a + (b - a) * t + new V(0, (float)Math.Sin(t * Math.PI * 3) * 3);
+                    V q2 = a + (b - a) * Math.Min(1, t + 1 / 8f) + new V(0, (float)Math.Sin((t + 1 / 8f) * Math.PI * 3) * 3);
+                    Line(g, i % 2 == 0 ? Color.FromArgb(178, 143, 95) : Color.FromArgb(143, 112, 70), 3, q, q2);
+                }
+
+                Circle(g, Color.FromArgb(120, 92, 56), a, 5);
+                Circle(g, Color.FromArgb(120, 92, 56), b, 5);
+                return;
+            }
+
             Circle(g, Color.FromArgb(232, 90, 64), p, r);
             using (var pen = new Pen(Color.FromArgb(249, 228, 174), 3))
                 g.DrawArc(pen, p.X - r + 3, p.Y - r + 3, r * 2 - 6, r * 2 - 6, time * 80, 140);

@@ -48,7 +48,8 @@ namespace SecondHonk
                 "Rubber duck",
                 "Pond",
                 "Puddle",
-                "Mud patch"
+                "Mud patch",
+                "Tug rope"
             };
             int n = 0;
             foreach (ToyKind kind in Enum.GetValues(typeof(ToyKind)))

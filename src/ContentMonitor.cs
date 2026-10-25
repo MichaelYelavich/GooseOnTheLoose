@@ -167,8 +167,9 @@ namespace SecondHonk
                         "None",
                         "Scarf",
                         "Sunhat"
-                    }.Contains(data.Hat))
+                    }.Contains(data.Hat) || (data.Mode != null && data.Mode != "Passive" && data.Mode != "Normal" && data.Mode != "Chaos") || (data.PreviousMode != null && data.PreviousMode != "Normal" && data.PreviousMode != "Chaos"))
                         throw new InvalidDataException("Invalid settings; previous preferences retained.");
+                    data.Normalize();
                     if (!initializing)
                     {
                         foreach (var field in typeof(SaveData).GetFields())

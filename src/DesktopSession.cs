@@ -63,7 +63,6 @@ namespace SecondHonk
                 else
                     audio.Step();
             };
-            World.CursorCaught += _ => audio.Bite();
             World.DeliveryStarted += actor => BeginDelivery(actor);
             World.DeliveryCompleted += _ => carried = null;
             ChooseMonitor(settings.Monitor);
@@ -149,12 +148,28 @@ namespace SecondHonk
             Item(mischief.DropDownItems, "Track mud", World.MakeMud);
             menu.Items.Add(new ToolStripSeparator());
             Toggle(menu.Items, "Paused                        Ctrl+Alt+P", () => World.Paused, v => World.SetPaused(v));
-            Toggle(menu.Items, "Quiet mode                   Ctrl+Alt+K", () => World.Data.Quiet, SetQuiet);
+            var mode = new ToolStripMenuItem("Mode");
+            menu.Items.Add(mode);
+            foreach (string choice in new[]
+            {
+                "Passive",
+                "Normal",
+                "Chaos"
+            }
+            )
+            {
+                string value = choice;
+                string title = value == "Passive" ? "Passive                      Ctrl+Alt+K" : value == "Normal" ? "Normal" : "Chaos (quieter for now)";
+                var item = Item(mode.DropDownItems, title, () =>
+                {
+                    SetMode(value);
+                });
+                menu.Opening += (s, e) => item.Checked = World.Data.Mode == value;
+            }
             var options = new ToolStripMenuItem("Options");
             menu.Items.Add(options);
             Toggle(options.DropDownItems, "Reduced motion", () => World.Data.ReducedMotion, v => World.Data.ReducedMotion = v);
             Toggle(options.DropDownItems, "Sound", () => World.Data.Sound, v => World.Data.Sound = v);
-            Toggle(options.DropDownItems, "Automatic mischief", () => World.Data.Mischief, v => World.Data.Mischief = v);
             Toggle(options.DropDownItems, "Mouse stealing when provoked", () => World.Data.MouseSteal, v =>
             {
                 World.Data.MouseSteal = v;
@@ -163,9 +178,9 @@ namespace SecondHonk
             });
             Toggle(options.DropDownItems, "Random cursor attacks", () => World.Data.RandomAttacks, v => World.Data.RandomAttacks = v);
             Toggle(options.DropDownItems, "A second goose", () => World.Data.Companion, v => World.SetCompanion(v));
-            Item(options.DropDownItems, "Quiet for 25 minutes", () =>
+            Item(options.DropDownItems, "Passive for 25 minutes", () =>
             {
-                SetQuiet(true);
+                SetMode("Passive");
                 World.QuietRemaining = 25 * 60;
                 Store.Save(World.Data);
             });
@@ -255,14 +270,14 @@ namespace SecondHonk
             menu.Opening += (s, e) =>
             {
                 World.ReleaseCursorAll();
-                tray.Text = World.Paused ? "Goose on the Loose — paused" : World.Data.Quiet ? "Goose on the Loose — quiet" : "Goose on the Loose";
+                tray.Text = World.Paused ? "Goose on the Loose — paused" : World.Data.Passive ? "Goose on the Loose — passive" : "Goose on the Loose";
             };
         }
 
-        void SetQuiet(bool quiet)
+        void SetMode(string mode)
         {
-            World.SetQuiet(quiet);
-            if (quiet)
+            World.SetMode(mode);
+            if (World.Data.Passive)
                 ClearNotes();
             if (carried != null && !carried.IsDisposed)
             {
@@ -271,6 +286,8 @@ namespace SecondHonk
                 carried = null;
                 suppressRetaliation = false;
             }
+
+            Store.Save(World.Data);
         }
 
         internal void ShowToolbox()
@@ -401,7 +418,7 @@ namespace SecondHonk
                     note = "Could not open that picture. Have a honk instead.";
                 }
 
-            if (exiting || revision != deliveryRevision || World.Data.Quiet || shutdown.Animating || (!String.IsNullOrEmpty(path) && actor.Task != Activity.Deliver))
+            if (exiting || revision != deliveryRevision || shutdown.Animating || (!String.IsNullOrEmpty(path) && actor.Task != Activity.Deliver))
             {
                 if (prepared != null)
                     prepared.Dispose();
@@ -423,7 +440,7 @@ namespace SecondHonk
             PlaceCarriedWindow(actor);
             window.FormClosed += (s, e) =>
             {
-                if (!exiting && !suppressRetaliation && !World.Data.Quiet)
+                if (!exiting && !suppressRetaliation)
                 {
                     if (window == carried)
                     {
@@ -480,8 +497,7 @@ namespace SecondHonk
                     World.GrabRemaining = 0;
                     break;
                 case 108:
-                    SetQuiet(!World.Data.Quiet);
-                    Store.Save(World.Data);
+                    SetMode(World.Data.Passive ? World.Data.PreviousMode : "Passive");
                     break;
                 case 109:
                     ExitThread();
@@ -544,7 +560,7 @@ namespace SecondHonk
             V pointer = Pointer();
             World.Pointer = pointer;
             bool left = (Native.GetAsyncKeyState(1) & 0x8000) != 0;
-            if (left && !leftWasDown && !World.Paused && !World.Data.Quiet && !escape && !World.Objects.Any(o => o.Dragging))
+            if (left && !leftWasDown && !World.Paused && !escape && !World.Objects.Any(o => o.Dragging))
             {
                 if (V.Distance(pointer, World.Goose.Pos - new V(0, 18 * World.Scale)) < 32 * World.Scale)
                     World.Chase(pointer);
@@ -583,7 +599,7 @@ namespace SecondHonk
             if (quietMenuIn <= 0)
             {
                 quietMenuIn = 1;
-                tray.Text = World.Paused ? "Goose on the Loose — paused" : World.Data.Quiet ? "Goose on the Loose — quiet" : "Goose on the Loose";
+                tray.Text = World.Paused ? "Goose on the Loose — paused" : World.Data.Passive ? "Goose on the Loose — passive" : "Goose on the Loose";
                 WriteStatus();
             }
         }
@@ -686,6 +702,8 @@ namespace SecondHonk
                     DeliveryOwner = World.Coordinator.DeliveryOwner != null ? World.Coordinator.DeliveryOwner.Name : "",
                     World.Paused,
                     World.Data.Quiet,
+                    Mode = World.Data.Mode,
+                    PreviousMode = World.Data.PreviousMode,
                     World.HoldingCursor,
                     World.Meals,
                     World.Fetches,

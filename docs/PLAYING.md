@@ -22,14 +22,15 @@ Right-click the goose tray icon to open the controls. There is no required contr
 | --- | --- |
 | **Toy Box** | Opens the optional floating palette for placing toys and water. |
 | **Play / Mischief** | Calls the goose, offers toys or asks for a note, picture or honk. |
-| **Pause / Quiet mode** | Stops gameplay or quiets the goose. Placement tools remain available while paused. |
+| **Pause** | Stops gameplay. Placement tools remain available while paused. |
+| **Mode** | **Passive**, **Normal** or **Chaos**. Passive keeps peaceful play, swimming and social scenes while stopping automatic pranks, unsolicited deliveries and cursor or window interference; sound stays off and explicit requests still work. Normal is the default mischief: deliveries, honks, and following or poking at the cursor without capturing it. Leaving Passive restores the previous mode. |
 | **Options** | Changes the companion, shared outfits, size, selected display, reduced motion, sound and cursor preferences. |
 | **Your content** | Imports pictures, edits notes, opens the content folder, reloads content or copies diagnostics. |
 | **Cleanup / Quit** | Clears objects, closes delivered windows or exits completely. |
 
-The optional companion is a Canada goose. Both geese use the same appearance preference, including **None**, **Scarf** and **Sunhat**; the companion remains a little smaller.
+The optional companion is a Canada goose. Both geese use the same appearance preference, including **None**, **Scarf** and **Sunhat**; the companion remains a little smaller. The two geese play together on their own: passing a ball, taking turns at fetch, sharing a tug rope, keeping pond company, resting nearby and starting brief chases, with invitations that can be accepted or declined.
 
-Random cursor attacks start disabled. A provoked cursor theft lasts at most 1.4 seconds, and a short **Escape** press releases the cursor immediately.
+Random cursor attacks start disabled. A provoked goose chases or honks but never captures the cursor, and a short **Escape** press calls off a chase. The **Chaos** choice is reserved for louder play: its extra pranks are not enabled yet, so it currently plays like Normal.
 
 ## Toys and water
 
@@ -38,7 +39,8 @@ Open **Toy Box**, then drag an illustrated button onto the selected display. Pla
 | Item | Try this |
 | --- | --- |
 | **Ball** | Drag and release to flick it. Balls bounce at desktop edges, and geese nudge them. |
-| **Fetch stick** | Put one out for the goose to retrieve. It drops the stick on return, ready to move or throw again. |
+| **Fetch stick** | Put one out for the goose to retrieve. It drops the stick on return, ready to move or throw again. Geese can also take turns fetching with each other. |
+| **Tug rope** | Put one out for the pair to brace, pull and release together. |
 | **Peas** | Distract and calm a goose. Either goose can eat them. |
 | **Rubber duck** | Nudge it on land or let it drift in a pond. |
 | **Pond** | Watch geese float with ripples. Water washes mud off their feet. |
@@ -65,12 +67,12 @@ Geese can drag small native note and picture windows onto the desktop. Closing o
 | **Ctrl+Alt+I** | Bring a picture |
 | **Ctrl+Alt+H** | Honk |
 | **Ctrl+Alt+P** | Pause / resume |
-| **Ctrl+Alt+K** | Quiet mode |
+| **Ctrl+Alt+K** | Passive mode |
 | **Ctrl+Alt+Q** | Quit immediately |
 
 ## Dismiss the geese
 
-- **Tap Escape:** release the cursor immediately.
+- **Tap Escape:** call off a chase.
 - **Hold Escape for five seconds:** a countdown appears, then every active goose bursts into cartoon feathers and smoke with a soft pop when sound is enabled. Release early to cancel. Reduced motion uses a short fade.
 - **Tray Quit or Ctrl+Alt+Q:** exit immediately.
 
@@ -117,7 +119,7 @@ Old `%LOCALAPPDATA%\DesktopGoose2\settings.json` preferences migrate once when D
 
 | Situation | What to try |
 | --- | --- |
-| You need the desktop back | Tap Escape for the cursor, or use **Ctrl+Alt+Q** to quit everything. |
+| You need the desktop back | Tap Escape to call off a chase, or use **Ctrl+Alt+Q** to quit everything. |
 | Toys or footprints are in the way | Use **Clear desktop objects** in the tray. |
 | A picture doesn't appear | Check the supported format and limits above, then use **Your content → Reload content**. |
 | A preset edit doesn't apply | Check that the JSON is valid. The last valid configuration remains active if an edit cannot be loaded. |
@@ -140,4 +142,4 @@ Pass a command to **GooseOnTheLoose.exe** to control the running instance. Launc
 | `--seed-content` | Initialize missing content without starting gameplay |
 | `--snapshot output.png` | Export goose artwork |
 
-For development, `DESKTOPGOOSE2_DATA_DIR` overrides the content directory and gives the process a separate single-instance lock and command events. Normal launches use Documents. **runtime.json** is enabled only for tests or when `GOOSE_DIAGNOSTICS=1` is set.
+For development, `DESKTOPGOOSE2_DATA_DIR` overrides the content directory and gives the process a separate single-instance lock and command events. Normal launches use Documents. **runtime.json** is enabled only for tests or when `GOOSE_DIAGNOSTICS=1` is set. `--quiet` selects Passive; using it again restores the previous mode.

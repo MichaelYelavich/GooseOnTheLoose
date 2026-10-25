@@ -11,7 +11,25 @@ namespace SecondHonk
         public int Version = 2;
         public bool Sound = true, Mischief = true, RandomAttacks = false, MouseSteal = true, Companion = false, Quiet = false, ReducedMotion = false;
         public string Hat = "None", Monitor = "";
+        public string Mode = "Normal", PreviousMode = "Normal";
         public float Scale = 1.5f;
+
+        public bool Passive
+        {
+            get
+            {
+                return Mode == "Passive";
+            }
+        }
+
+        public void Normalize()
+        {
+            if (Mode != "Passive" && Mode != "Normal" && Mode != "Chaos")
+                Mode = "Normal";
+            if (PreviousMode != "Normal" && PreviousMode != "Chaos")
+                PreviousMode = "Normal";
+            Quiet = Mode == "Passive";
+        }
     }
 
     public static class Store
@@ -41,6 +59,11 @@ namespace SecondHonk
                             "Sunhat"
                         }.Contains(s.Hat))
                             s.Hat = "None";
+                        if (s.Mode != null && s.Mode != "Passive" && s.Mode != "Normal" && s.Mode != "Chaos")
+                            throw new InvalidDataException("Unknown mode");
+                        if (s.PreviousMode != null && s.PreviousMode != "Normal" && s.PreviousMode != "Chaos")
+                            throw new InvalidDataException("Unknown previous mode");
+                        s.Normalize();
                         if (float.IsNaN(s.Scale) || float.IsInfinity(s.Scale))
                             s.Scale = 1.5f;
                         s.Scale = Math.Max(1, Math.Min(2, s.Scale));

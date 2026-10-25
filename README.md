@@ -20,7 +20,7 @@ A spiritual successor to Desktop Goose, made for Windows 11.
 
 **Goose on the Loose is an independent spiritual successor to [Desktop Goose by Samperson](https://samperson.itch.io/desktop-goose).** It keeps the desktop geese, adds toys, water and native tools, and focuses on reliability and performance.
 
-Your goose wanders across your desktop, honks, fetches sticks and brings you pictures and notes. Add a Canada goose for company, drop a pond beside your work, or leave out a ball and see what happens. They can even steal your cursor when provoked.
+Your goose wanders across your desktop, honks, fetches sticks and brings you pictures and notes. Add a Canada goose for company, drop a pond beside your work, or leave out a ball and see what happens. When provoked, they chase or honk — but never capture the cursor.
 
 Everything happens directly on the desktop. Controls live in the tray, and the Toy Box opens when you want it. No account is needed, and the game runs offline.
 
@@ -29,10 +29,10 @@ Everything happens directly on the desktop. Controls live in the tray, and the T
 | | On your desktop |
 | --- | --- |
 | **Two geese** | A white goose and an optional Canada goose companion. Shared scarves, sunhats and size settings. |
-| **A proper Toy Box** | Balls, fetch sticks, peas, rubber ducks, ponds, puddles and mud patches. Place up to 16 objects. |
+| **A proper Toy Box** | Balls, fetch sticks, tug ropes, peas, rubber ducks, ponds, puddles and mud patches. Place up to 16 objects. |
 | **Water and muddy feet** | Swimming, ripples, floating ducks and fading wet or muddy footprints. Clean water washes mud away. |
 | **Personal mischief** | Geese deliver your pictures and ordinary text notes in small native windows. |
-| **Room to adjust** | Pause, quiet mode, reduced motion and cursor-stealing preferences, plus editable behavior presets. |
+| **Room to adjust** | Pause, Passive/Normal/Chaos modes, reduced motion and cursor preferences, plus editable behavior presets. |
 
 Preferences and custom content persist. Toys, water, footprints and delivered windows start fresh each time you launch.
 

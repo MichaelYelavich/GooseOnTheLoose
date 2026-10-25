@@ -92,12 +92,12 @@ namespace SecondHonk
             w.Goose.Place(new V(450, 360));
             w.Chase(w.Goose, w.Beak(w.Goose));
             w.Update(.01f);
-            check(w.HoldingCursor && w.GrabOwner == w.Goose, "White acquires the single cursor ownership on a provoked grab");
+            check(w.Goose.Task == Activity.Chase && !w.HoldingCursor && w.GrabOwner == null, "A provoked goose chases without capturing the cursor in Normal");
             w.Chase(w.Friend, w.Beak(w.Friend));
             w.Update(.1f);
-            check(w.GrabOwner == w.Goose, "Canada cannot steal an owned cursor grab");
+            check(w.Friend.Task == Activity.Chase && !w.HoldingCursor && w.Coordinator.CursorOwner == null, "Neither goose captures the cursor outside Chaos");
             Advance(w, 2);
-            check(!w.HoldingCursor && w.GrabOwner == null, "Cursor grabs release within their bounded time");
+            check(!w.HoldingCursor && w.Coordinator.CursorOwner == null, "Chase never acquires cursor ownership without the Chaos tier");
 
             w = New(content, true);
             w.Deliver(w.Goose, false);

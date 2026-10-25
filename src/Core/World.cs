@@ -14,6 +14,7 @@ namespace SecondHonk
         public readonly List<Mark> Marks = new List<Mark>();
         public readonly List<DesktopObject> Objects = new List<DesktopObject>();
         public readonly PlayCoordinator Coordinator = new PlayCoordinator();
+        public readonly SocialScenes Scenes;
         public Behavior Behavior = new Behavior();
         public bool Editing, Exploding;
         public float DismissRemaining, ExplosionTime;
@@ -25,7 +26,7 @@ namespace SecondHonk
         public bool Paused;
         public int Meals, Fetches, Kicks, Deliveries;
         public string DeliveryText = "", DeliveryImage = "";
-        public event Action<Goose> Honked, FootLanded, CursorCaught, DeliveryStarted, DeliveryCompleted;
+        public event Action<Goose> Honked, FootLanded, DeliveryStarted, DeliveryCompleted;
         public float Scale
         {
             get
@@ -173,14 +174,24 @@ namespace SecondHonk
         {
             get
             {
-                return GrabRemaining > 0 && !Paused && !Data.Quiet && Data.MouseSteal;
+                return GrabRemaining > 0 && !Paused && Data.MouseSteal;
+            }
+        }
+
+        public bool IsPassive
+        {
+            get
+            {
+                return Data.Passive;
             }
         }
 
         public World(SaveData data, Content content, int seed)
         {
             Data = data;
+            Data.Normalize();
             Content = content;
+            Scenes = new SocialScenes(seed);
             random = new Random(seed);
             Goose.Boldness = .7f;
             Goose.Sociability = .45f;
@@ -311,6 +322,8 @@ namespace SecondHonk
         {
             if (actor == null)
                 return;
+            if (task != Activity.Social && Scenes.IsParticipant(actor))
+                Scenes.Cancel(this);
             if (task != Activity.Fetch && task != Activity.Return && actor.Held != null)
                 Coordinator.ReleaseCarry(actor, actor.Held);
             if (actor.TargetObject != null && actor.TargetObject != actor.Held)
@@ -367,7 +380,7 @@ namespace SecondHonk
             {
                 Kind = kind,
                 Pos = Clamp(p),
-                Size = kind == ToyKind.Pond ? new V(230, 145) : kind == ToyKind.Puddle || kind == ToyKind.Mud ? new V(135, 80) : kind == ToyKind.Stick ? new V(48, 24) : kind == ToyKind.Peas ? new V(32, 28) : kind == ToyKind.Duck ? new V(48, 36) : new V(36, 36)
+                Size = kind == ToyKind.Pond ? new V(230, 145) : kind == ToyKind.Puddle || kind == ToyKind.Mud ? new V(135, 80) : kind == ToyKind.Stick ? new V(48, 24) : kind == ToyKind.Rope ? new V(56, 24) : kind == ToyKind.Peas ? new V(32, 28) : kind == ToyKind.Duck ? new V(48, 36) : new V(36, 36)
             };
             o.Pos = ConstrainObject(o, p);
             Objects.Add(o);
@@ -378,6 +391,8 @@ namespace SecondHonk
         {
             if (o == null)
                 return;
+            if (Scenes.Active != null && Scenes.Active.Prop == o)
+                Scenes.Cancel(this);
             Objects.Remove(o);
             Coordinator.Release(o);
             if (o == ball)
@@ -399,6 +414,8 @@ namespace SecondHonk
         {
             if (o == null)
                 return;
+            if (Scenes.Active != null && Scenes.Active.Prop == o)
+                Scenes.Cancel(this);
             ReleaseCursorAll();
             Coordinator.Release(o);
             if (o == ball)
@@ -445,6 +462,7 @@ namespace SecondHonk
             ReleaseCursorAll();
             if (paused)
             {
+                Scenes.Cancel(this);
                 Coordinator.ReleaseUnpossessed();
                 foreach (var actor in new[] { Goose, Friend })
                     if (actor.TargetObject != null && Coordinator.OwnerOf(actor.TargetObject) != actor)
@@ -461,8 +479,11 @@ namespace SecondHonk
         {
             if (actor == null)
                 return;
-            if (!Data.Quiet && Data.Sound && Honked != null)
-                Honked(actor);
+            if (IsPassive)
+                return;
+            if (!Data.Sound || Honked == null)
+                return;
+            Honked(actor);
         }
 
         public void Chase(V p)
@@ -472,10 +493,11 @@ namespace SecondHonk
 
         public void Chase(Goose actor, V p)
         {
-            if (actor == null || Paused || Data.Quiet)
+            if (actor == null || Paused)
                 return;
             Pointer = Clamp(p);
             ReleaseCursorFor(actor);
+            actor.Auto = false;
             SetTaskActor(actor, Activity.Chase);
             Honk(actor);
         }
@@ -491,6 +513,7 @@ namespace SecondHonk
                 return;
             Pointer = Clamp(p);
             ReleaseCursorFor(actor);
+            actor.Auto = false;
             SetTaskActor(actor, Activity.Follow);
         }
 
@@ -504,6 +527,7 @@ namespace SecondHonk
             if (actor == null)
                 return;
             ReleaseCursorFor(actor);
+            actor.Auto = false;
             SetTaskActor(actor, Activity.Follow);
             Pointer = Clamp(p);
             Honk(actor);
@@ -524,6 +548,7 @@ namespace SecondHonk
             if (o == null)
                 return;
             ReleaseCursorFor(actor);
+            actor.Auto = false;
             SetTaskActor(actor, Activity.Eat);
         }
 
@@ -534,9 +559,10 @@ namespace SecondHonk
 
         public void ThrowBall(Goose actor, V p)
         {
-            if (actor == null || Paused || Data.Quiet)
+            if (actor == null || Paused)
                 return;
             ReleaseCursorFor(actor);
+            actor.Auto = false;
             DesktopObject o;
             if (actor == Goose)
             {
@@ -566,9 +592,10 @@ namespace SecondHonk
 
         public void Fetch(Goose actor, V p)
         {
-            if (actor == null || Paused || Data.Quiet)
+            if (actor == null || Paused)
                 return;
             ReleaseCursorFor(actor);
+            actor.Auto = false;
             if (actor == Goose)
             {
                 PlaceObject(ToyKind.Stick, p);
@@ -595,9 +622,10 @@ namespace SecondHonk
 
         public void MakeMud(Goose actor)
         {
-            if (actor == null || Paused || Data.Quiet)
+            if (actor == null || Paused)
                 return;
             ReleaseCursorFor(actor);
+            actor.Auto = false;
             actor.Coating = Coating.Mud;
             actor.TrailRemaining = Behavior.TrailSteps;
             SetTaskActor(actor, Activity.Mud);
@@ -612,8 +640,9 @@ namespace SecondHonk
 
         public void Deliver(Goose actor, bool image)
         {
-            if (actor == null || Paused || Data.Quiet)
+            if (actor == null || Paused)
                 return;
+            actor.Auto = false;
             if (Coordinator.DeliveryOwner != null && Coordinator.DeliveryOwner != actor)
                 return;
             if (!Coordinator.TryAcquireDelivery(actor))
@@ -627,12 +656,47 @@ namespace SecondHonk
             Honk(actor);
         }
 
-        public void SetQuiet(bool quiet)
+        public void SetMode(string mode)
         {
-            Data.Quiet = quiet;
+            if (mode != "Passive" && mode != "Normal" && mode != "Chaos")
+                return;
+            if (mode == "Passive")
+            {
+                if (!IsPassive && Data.Mode != "Passive")
+                    Data.PreviousMode = Data.Mode;
+                Data.Mode = "Passive";
+                foreach (var actor in new[] { Goose, Friend })
+                    if (actor.Auto && (actor.Task == Activity.Deliver || actor.Task == Activity.Mud || actor.Task == Activity.Chase))
+                        CancelActor(actor);
+                Scenes.CancelIntrusive(this);
+            }
+            else
+            {
+                Data.Mode = mode;
+                Data.PreviousMode = mode;
+            }
+
+            Data.Quiet = IsPassive;
             QuietRemaining = 0;
             ReleaseCursorAll();
-            CancelAll();
+        }
+
+        public void SetQuiet(bool quiet)
+        {
+            if (quiet)
+                SetMode("Passive");
+            else
+                SetMode(Data.PreviousMode);
+        }
+
+        public bool StartScene(SceneKind kind)
+        {
+            return Scenes.Start(this, kind);
+        }
+
+        public bool StartScene(SceneKind kind, Goose leader)
+        {
+            return Scenes.Start(this, kind, leader);
         }
 
         V RandomPoint()
@@ -647,10 +711,10 @@ namespace SecondHonk
                 var choices = new List<int>();
                 int[] weights =
                 {
-                    Behavior.MudWeight,
-                    Behavior.NoteWeight,
-                    Behavior.PictureWeight,
-                    Behavior.ChaseWeight,
+                    IsPassive ? 0 : Behavior.MudWeight,
+                    IsPassive ? 0 : Behavior.NoteWeight,
+                    IsPassive ? 0 : Behavior.PictureWeight,
+                    IsPassive ? 0 : Behavior.ChaseWeight,
                     Behavior.ToyWeight
                 };
                 for (int k = 0; k < weights.Length; k++)
@@ -670,16 +734,23 @@ namespace SecondHonk
             {
                 case 0:
                     MakeMud(actor);
+                    actor.Auto = true;
                     break;
                 case 1:
                     Deliver(actor, false);
+                    actor.Auto = true;
                     break;
                 case 2:
                     Deliver(actor, true);
+                    actor.Auto = true;
                     break;
                 case 3:
                     if (Data.RandomAttacks)
+                    {
                         Chase(actor, Pointer);
+                        actor.Auto = true;
+                    }
+
                     break;
                 case 4:
                     DesktopObject found = null;
@@ -779,7 +850,7 @@ namespace SecondHonk
                 if (t >= 1)
                 {
                     LandFoot(g, foot);
-                    if (!g.Swimming && Data.Sound && !Data.Quiet && FootLanded != null)
+                    if (!g.Swimming && Data.Sound && !IsPassive && FootLanded != null)
                         FootLanded(g);
                     g.MovingFoot = -1;
                 }
@@ -904,13 +975,14 @@ namespace SecondHonk
                         }
             }
 
-            if (Data.Quiet)
+            if (IsPassive)
                 foreach (var actor in Data.Companion ? new[] { Goose, Friend } : new[] { Goose })
-                    if (actor.Task == Activity.Chase || actor.Task == Activity.Mud || actor.Task == Activity.Deliver || actor.Task == Activity.Fetch || actor.Task == Activity.Ball)
+                    if (actor.Auto && (actor.Task == Activity.Chase || actor.Task == Activity.Mud || actor.Task == Activity.Deliver))
                         CancelActor(actor);
             StepActor(Goose, dt);
             if (Data.Companion)
                 StepActor(Friend, dt);
+            Scenes.Update(this, dt);
         }
 
         void StepActor(Goose actor, float dt)
@@ -964,31 +1036,9 @@ namespace SecondHonk
                     break;
                 case Activity.Chase:
                     speed = 400;
-                    if (HoldingCursor && Coordinator.CursorOwner == actor)
-                    {
-                        GrabRemaining -= dt;
-                        target = GrabTarget;
-                        if (GrabRemaining <= 0)
-                            CancelActor(actor);
-                        else if (V.Distance(actor.Pos, target) < 20 * Scale)
-                            CancelActor(actor);
-                    }
-                    else
-                    {
-                        target = Clamp(Pointer - (Beak(actor) - actor.Pos));
-                        if (Data.MouseSteal && actor.TaskTime < 9 && V.Distance(Beak(actor), Pointer) < 18 * Scale && (Coordinator.CursorOwner == null || Coordinator.CursorOwner == actor))
-                        {
-                            Coordinator.TryAcquireCursor(actor);
-                            GrabRemaining = 1.4f;
-                            GrabTarget = Clamp(actor.Pos + V.Direction((float)random.NextDouble() * 6.28f) * (340 * Scale));
-                            if (Data.Sound && CursorCaught != null)
-                                CursorCaught(actor);
-                        }
-
-                        if (actor.TaskTime > 9)
-                            CancelActor(actor);
-                    }
-
+                    target = Clamp(Pointer - (Beak(actor) - actor.Pos));
+                    if (actor.TaskTime > 9)
+                        CancelActor(actor);
                     break;
                 case Activity.Follow:
                     target = Pointer;
@@ -1097,6 +1147,12 @@ namespace SecondHonk
                         Honk(actor);
                     }
 
+                    break;
+                case Activity.Social:
+                    if (Scenes.IsParticipant(actor))
+                        Scenes.Steer(this, actor, dt, ref target, ref speed, ref offscreen);
+                    else
+                        SetTaskActor(actor, Activity.Wander);
                     break;
                 case Activity.Mud:
                     target = actor.Target;

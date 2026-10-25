@@ -17,7 +17,8 @@ namespace SecondHonk
         Mud,
         Deliver,
         Sleep,
-        Follow
+        Follow,
+        Social
     }
 
     public sealed class Goose
@@ -26,7 +27,8 @@ namespace SecondHonk
         public readonly string Name;
         public V Pos, Velocity, Target, Attention, LeftFoot, RightFoot, FootOrigin, FootDestination;
         public float Direction, HeadDirection, Neck, FootTime, StepDuration = .2f, Wait, TaskTime;
-        public float AutoIn = 20, NapIn = 180, BallCooldown, WaitOffscreen;
+        public float AutoIn = 20, NapIn = 180, BallCooldown, WaitOffscreen, SocialCooldown;
+        public bool Auto;
         public readonly Queue<int> Deck = new Queue<int>();
         public int DeliveryStage, DeliverySide;
         public V ReturnPoint;
@@ -74,7 +76,8 @@ namespace SecondHonk
         Duck,
         Pond,
         Puddle,
-        Mud
+        Mud,
+        Rope
     }
 
     public sealed class DesktopObject
