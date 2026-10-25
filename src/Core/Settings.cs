@@ -13,6 +13,10 @@ namespace SecondHonk
         public string Hat = "None", Monitor = "";
         public string Mode = "Normal", PreviousMode = "Normal";
         public float Scale = 1.5f;
+        // Pair bond, 0 (new pair) to 1 (fully warm). Invisible: no meter,
+        // no readout, no chores. Grows only through varied shared play;
+        // missing in upgraded profiles (compatible default 0).
+        public float Bond = 0;
 
         public bool Passive
         {
@@ -61,6 +65,8 @@ namespace SecondHonk
                             s.Hat = "None";
                         if (s.Mode != null && s.Mode != "Passive" && s.Mode != "Normal" && s.Mode != "Chaos")
                             throw new InvalidDataException("Unknown mode");
+                        if (float.IsNaN(s.Bond) || float.IsInfinity(s.Bond) || s.Bond < 0 || s.Bond > 1)
+                            throw new InvalidDataException("Unknown bond");
                         if (s.PreviousMode != null && s.PreviousMode != "Normal" && s.PreviousMode != "Chaos")
                             throw new InvalidDataException("Unknown previous mode");
                         s.Normalize();

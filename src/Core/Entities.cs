@@ -21,6 +21,12 @@ namespace SecondHonk
         Social
     }
 
+    public enum DeliveryRecipient
+    {
+        User,
+        Partner
+    }
+
     public sealed class Goose
     {
         public readonly int Id;
@@ -31,6 +37,11 @@ namespace SecondHonk
         public bool Auto;
         public readonly Queue<int> Deck = new Queue<int>();
         public int DeliveryStage, DeliverySide;
+        // In-flight delivery snapshot, captured when the delivery starts so
+        // reloads, content edits, companion toggles or shutdown cannot
+        // reroute or corrupt it. Valid only while Task == Deliver.
+        public string DeliveryNote = "", DeliveryImagePath = "";
+        public DeliveryRecipient DeliveryRecipient = DeliveryRecipient.User;
         public V ReturnPoint;
         public DesktopObject Held, TargetObject;
         public float Boldness = .5f, Sociability = .5f;

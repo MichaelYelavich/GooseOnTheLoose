@@ -167,13 +167,18 @@ namespace SecondHonk
                         "None",
                         "Scarf",
                         "Sunhat"
-                    }.Contains(data.Hat) || (data.Mode != null && data.Mode != "Passive" && data.Mode != "Normal" && data.Mode != "Chaos") || (data.PreviousMode != null && data.PreviousMode != "Normal" && data.PreviousMode != "Chaos"))
+                    }.Contains(data.Hat) || (data.Mode != null && data.Mode != "Passive" && data.Mode != "Normal" && data.Mode != "Chaos") || (data.PreviousMode != null && data.PreviousMode != "Normal" && data.PreviousMode != "Chaos") || float.IsNaN(data.Bond) || float.IsInfinity(data.Bond) || data.Bond < 0 || data.Bond > 1)
                         throw new InvalidDataException("Invalid settings; previous preferences retained.");
                     data.Normalize();
                     if (!initializing)
                     {
                         foreach (var field in typeof(SaveData).GetFields())
-                            field.SetValue(world.Data, field.GetValue(data));
+                            // The bond is session truth while running: it
+                            // grows only through shared play and persists on
+                            // save, so a live reload never overwrites it. The
+                            // file value applies on the next restart.
+                            if (field.Name != "Bond")
+                                field.SetValue(world.Data, field.GetValue(data));
                         SettingsChanged?.Invoke();
                     }
 

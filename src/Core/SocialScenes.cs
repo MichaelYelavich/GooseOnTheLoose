@@ -162,6 +162,9 @@ namespace SecondHonk
             ReleaseScene(w, scene);
             CompletedScenes++;
             LastCompleted = scene.Kind;
+            // Only natural completions grow the bond: cancellations,
+            // declines and interruptions credit nothing.
+            w.CreditBond(scene.Kind);
             foreach (var actor in new[] { scene.Leader, scene.Follower })
             {
                 if (actor == null)
@@ -254,7 +257,9 @@ namespace SecondHonk
                     if (scene.AnswerIn <= 0 && scene.Invite.State == InvitationState.Offered)
                     {
                         bool free = scene.Follower.Task == Activity.Wander || scene.Follower.Task == Activity.Social;
-                        double accept = 0.45 + 0.4 * scene.Follower.Sociability;
+                        // Warmth makes acceptance more likely without removing
+                        // the follower's personality or right to decline.
+                        double accept = Math.Min(.95, 0.45 + 0.4 * scene.Follower.Sociability + 0.1 * w.Data.Bond);
                         if (free && random.NextDouble() < accept)
                         {
                             w.Coordinator.Respond(scene.Invite.Id, true);
@@ -351,8 +356,11 @@ namespace SecondHonk
                     scene.Timer = 6 + (float)random.NextDouble() * 4;
                     break;
                 case SceneKind.Rest:
-                    scene.SpotA = w.Clamp(mid + new V(-42 * w.Scale, 8 * w.Scale));
-                    scene.SpotB = w.Clamp(mid + new V(42 * w.Scale, -8 * w.Scale));
+                    // Warmer pairs settle a little closer, never on top of
+                    // each other.
+                    float closeness = 1 - .15f * w.Data.Bond;
+                    scene.SpotA = w.Clamp(mid + new V(-42 * w.Scale * closeness, 8 * w.Scale));
+                    scene.SpotB = w.Clamp(mid + new V(42 * w.Scale * closeness, -8 * w.Scale));
                     scene.Timer = 8 + (float)random.NextDouble() * 6;
                     break;
                 case SceneKind.Pursuit:

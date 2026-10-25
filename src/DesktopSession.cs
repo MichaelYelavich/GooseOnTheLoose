@@ -401,7 +401,16 @@ namespace SecondHonk
             deliveryCancel = new CancellationTokenSource();
             var token = deliveryCancel.Token;
             int revision = ++deliveryRevision;
-            string note = World.DeliveryText, path = World.DeliveryImage;
+            // The sender, recipient and payload were captured when the
+            // delivery started, so later reloads, edits, companion toggles
+            // or shutdown cannot reroute it. World fields are only the
+            // fallback for deliveries seeded without an actor snapshot.
+            string note = actor.DeliveryNote, path = actor.DeliveryImagePath;
+            if (String.IsNullOrEmpty(note) && String.IsNullOrEmpty(path))
+            {
+                note = World.DeliveryText;
+                path = World.DeliveryImage;
+            }
             PreparedPicture prepared = null;
             if (!String.IsNullOrEmpty(path))
                 try

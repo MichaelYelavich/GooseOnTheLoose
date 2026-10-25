@@ -178,6 +178,7 @@ namespace SecondHonk
                 BetaTests.Run(content, Assert);
                 EqualActorTests.Run(content, Assert);
                 SocialModeTests.Run(content, Assert);
+                BondContentTests.Run(content, Assert);
                 results.Add("\nAll " + results.Count + " desktop checks passed. Windows " + Environment.OSVersion.Version + ".");
                 Environment.ExitCode = 0;
             }

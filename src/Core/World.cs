@@ -21,6 +21,11 @@ namespace SecondHonk
         DesktopObject ball, stick;
         readonly Random random;
         int noteIndex, imageIndex;
+        // Per-scene-kind sim-time of the last bond credit. Repeat pacing:
+        // replaying the same kind inside the cooldown window earns the
+        // reduced repeat credit instead of the full varied credit.
+        readonly System.Collections.Generic.Dictionary<SceneKind, float> lastBondCredit = new System.Collections.Generic.Dictionary<SceneKind, float>();
+        bool parkFriendAfterDelivery;
         public float Width = 1280, Height = 752, Time, GrabRemaining, QuietRemaining;
         public V Pointer, GrabTarget;
         public bool Paused;
@@ -208,6 +213,26 @@ namespace SecondHonk
             Friend.AutoIn = Behavior.PrankMinSeconds;
         }
 
+        // Pair-bond credit, called only for naturally completed shared
+        // scenes. Tuning (measured Card 3 evidence: 16 completions and bond
+        // 0.01144 in 30 sim-minutes of pair play project to 21.9 hours for a
+        // half-warm bond, inside the 20 to 30 hour target): a varied completion
+        // earns FullCredit; replaying the same kind inside RepeatCooldown
+        // sim-seconds earns RepeatCredit instead, so repetition cannot grind.
+        // Credit flows only from Update steps (World.Time never advances while
+        // paused), so pausing, idle process time and system-clock changes add
+        // nothing.
+        const float FullCredit = .0008f, RepeatCredit = .00012f, RepeatCooldown = 300;
+        public void CreditBond(SceneKind kind)
+        {
+            if (!Data.Companion || Paused)
+                return;
+            float last;
+            float credit = lastBondCredit.TryGetValue(kind, out last) && Time - last < RepeatCooldown ? RepeatCredit : FullCredit;
+            lastBondCredit[kind] = Time;
+            Data.Bond = Math.Min(1, Data.Bond + credit);
+        }
+
         public V Clamp(V p)
         {
             return new V(Math.Max(35 * Scale, Math.Min(Width - 35 * Scale, p.X)), Math.Max(65 * Scale, Math.Min(Height - 20 * Scale, p.Y)));
@@ -243,6 +268,7 @@ namespace SecondHonk
         {
             CancelAll();
             Coordinator.Clear();
+            parkFriendAfterDelivery = false;
             Objects.Clear();
             ball = stick = null;
             Marks.Clear();
@@ -273,7 +299,13 @@ namespace SecondHonk
             if (actor == null)
                 return;
             if (actor.Task == Activity.Deliver)
+            {
                 Coordinator.ReleaseDelivery(actor);
+                actor.DeliveryNote = "";
+                actor.DeliveryImagePath = "";
+                actor.DeliveryRecipient = DeliveryRecipient.User;
+            }
+
             SetTaskActor(actor, Activity.Wander);
             if (Coordinator.CursorOwner == actor)
             {
@@ -438,12 +470,22 @@ namespace SecondHonk
             Data.Companion = enabled;
             if (!enabled)
             {
+                if (Friend.Task == Activity.Deliver)
+                {
+                    // An in-flight delivery survives the toggle with its
+                    // sender, recipient and payload intact; the actor parks
+                    // once the pipeline releases.
+                    parkFriendAfterDelivery = true;
+                    return;
+                }
+
                 Coordinator.ReleaseAllFor(Friend);
                 SetTaskActor(Friend, Activity.Wander);
                 Friend.Target = Friend.Pos;
             }
             else
             {
+                parkFriendAfterDelivery = false;
                 Friend.Place(Clamp(Goose.Pos + new V(-70, 25)));
                 SetTaskActor(Friend, Activity.Wander);
             }
@@ -638,18 +680,55 @@ namespace SecondHonk
             Deliver(Goose, image);
         }
 
+        // Explicitly requested delivery (tray, shortcut or command). Always
+        // user-facing: the recipient is the user and the payload comes from
+        // the user's own notes and pictures, including imports.
         public void Deliver(Goose actor, bool image)
+        {
+            DeliverInternal(actor, image, true);
+        }
+
+        // Autonomous delivery from the simulation's own choices. Recipient-
+        // aware: in pair play either goose may send bundled correspondence to
+        // the other, more often as the bond warms; solo play stays a gift
+        // for the user.
+        public void AutoDeliver(Goose actor, bool image)
+        {
+            DeliverInternal(actor, image, false);
+        }
+
+        void DeliverInternal(Goose actor, bool image, bool explicitRequest)
         {
             if (actor == null || Paused)
                 return;
-            actor.Auto = false;
+            if (explicitRequest)
+                actor.Auto = false;
             if (Coordinator.DeliveryOwner != null && Coordinator.DeliveryOwner != actor)
                 return;
             if (!Coordinator.TryAcquireDelivery(actor))
                 return;
             ReleaseCursorFor(actor);
-            DeliveryText = Content.Notes.Count == 0 ? "Have a honk." : Content.Notes[(noteIndex++ & int.MaxValue) % Content.Notes.Count];
-            DeliveryImage = image && Content.Images.Count > 0 ? Content.Images[(imageIndex++ & int.MaxValue) % Content.Images.Count] : "";
+            DeliveryRecipient recipient = DeliveryRecipient.User;
+            string note, path;
+            if (!explicitRequest && Data.Companion && random.NextDouble() < .12 + .5 * Data.Bond)
+            {
+                recipient = DeliveryRecipient.Partner;
+                note = BundledContent.ChoosePartnerNote(random, Data.Bond);
+                path = "";
+            }
+            else
+            {
+                note = Content.Notes.Count == 0 ? "Have a honk." : Content.Notes[(noteIndex++ & int.MaxValue) % Content.Notes.Count];
+                path = image && Content.Images.Count > 0 ? Content.Images[(imageIndex++ & int.MaxValue) % Content.Images.Count] : "";
+                if (BundledContent.IsTextOnly(note))
+                    path = "";
+            }
+
+            actor.DeliveryRecipient = recipient;
+            actor.DeliveryNote = note;
+            actor.DeliveryImagePath = path;
+            DeliveryText = note;
+            DeliveryImage = path;
             actor.DeliverySide = actor.Pos.X < Width / 2 ? -1 : 1;
             SetTaskActor(actor, Activity.Deliver);
             actor.Target = new V(actor.DeliverySide < 0 ? -75 * Scale : Width + 75 * Scale, Math.Max(120 * Scale, Math.Min(Height - 100 * Scale, actor.Pos.Y)));
@@ -737,11 +816,11 @@ namespace SecondHonk
                     actor.Auto = true;
                     break;
                 case 1:
-                    Deliver(actor, false);
+                    AutoDeliver(actor, false);
                     actor.Auto = true;
                     break;
                 case 2:
-                    Deliver(actor, true);
+                    AutoDeliver(actor, true);
                     actor.Auto = true;
                     break;
                 case 3:
@@ -980,7 +1059,9 @@ namespace SecondHonk
                     if (actor.Auto && (actor.Task == Activity.Chase || actor.Task == Activity.Mud || actor.Task == Activity.Deliver))
                         CancelActor(actor);
             StepActor(Goose, dt);
-            if (Data.Companion)
+            // A disabled companion finishes an in-flight delivery with its
+            // captured sender, recipient and payload before parking.
+            if (Data.Companion || Friend.Task == Activity.Deliver)
                 StepActor(Friend, dt);
             Scenes.Update(this, dt);
         }
@@ -1025,7 +1106,8 @@ namespace SecondHonk
                     if (actor == Friend && actor.Task == Activity.Wander)
                     {
                         V follow = Goose.Pos - V.Direction(Goose.Direction) * (65 * Scale) + new V(0, 15 * Scale);
-                        float comfort = 40 + 60 * actor.Sociability;
+                        // A warmer bond tolerates comfortable closeness.
+                        float comfort = Math.Max(30, 40 + 60 * actor.Sociability - 10 * Data.Bond);
                         if (V.Distance(actor.Pos, follow) > comfort * Scale)
                         {
                             target = follow;
@@ -1184,8 +1266,24 @@ namespace SecondHonk
                     else if (actor.DeliveryStage == 2 && V.Distance(actor.Pos, target) < 15 * Scale)
                     {
                         Deliveries++;
+                        if (actor.DeliveryRecipient == DeliveryRecipient.Partner && Data.Companion)
+                        {
+                            // The recipient notices and answers: a warmer
+                            // bond makes a return honk more likely.
+                            Goose other = actor == Goose ? Friend : Goose;
+                            if (random.NextDouble() < .25 + .5 * Data.Bond)
+                                Honk(other);
+                        }
+
                         Coordinator.ReleaseDelivery(actor);
                         CancelActor(actor);
+                        if (actor == Friend && parkFriendAfterDelivery && !Data.Companion)
+                        {
+                            parkFriendAfterDelivery = false;
+                            Coordinator.ReleaseAllFor(Friend);
+                            Friend.Target = Friend.Pos;
+                        }
+
                         if (DeliveryCompleted != null)
                             DeliveryCompleted(actor);
                     }
