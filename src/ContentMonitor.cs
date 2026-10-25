@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
@@ -162,13 +161,12 @@ namespace SecondHonk
                 if (snapshot.Settings != settingsText)
                 {
                     var data = new JavaScriptSerializer().Deserialize<SaveData>(snapshot.Settings);
-                    if (data == null || data.Version != 2 || float.IsNaN(data.Scale) || float.IsInfinity(data.Scale) || data.Scale < 1 || data.Scale > 2 || !new[]
-                    {
-                        "None",
-                        "Scarf",
-                        "Sunhat"
-                    }.Contains(data.Hat) || (data.Mode != null && data.Mode != "Passive" && data.Mode != "Normal" && data.Mode != "Chaos") || (data.PreviousMode != null && data.PreviousMode != "Normal" && data.PreviousMode != "Chaos") || float.IsNaN(data.Bond) || float.IsInfinity(data.Bond) || data.Bond < 0 || data.Bond > 1)
+                    if (data == null || data.Version != 2 || float.IsNaN(data.Scale) || float.IsInfinity(data.Scale) || data.Scale < 1 || data.Scale > 2 || (data.Mode != null && data.Mode != "Passive" && data.Mode != "Normal" && data.Mode != "Chaos") || (data.PreviousMode != null && data.PreviousMode != "Normal" && data.PreviousMode != "Chaos") || float.IsNaN(data.Bond) || float.IsInfinity(data.Bond) || data.Bond < 0 || data.Bond > 1)
                         throw new InvalidDataException("Invalid settings; previous preferences retained.");
+                    // Legacy files name the shared Hat but no per-goose
+                    // slots; migrate before validating the new fields.
+                    SaveData.MigrateLegacyJson(data, snapshot.Settings);
+                    data.ValidateSlots();
                     data.Normalize();
                     if (!initializing)
                     {

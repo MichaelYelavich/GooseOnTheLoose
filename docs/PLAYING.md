@@ -23,14 +23,16 @@ Right-click the goose tray icon to open the controls. There is no required contr
 | **Toy Box** | Opens the optional floating palette for placing toys and water. |
 | **Play / Mischief** | Calls the goose, offers toys or asks for a note, picture or honk. |
 | **Pause** | Stops gameplay. Placement tools remain available while paused. |
-| **Mode** | **Passive**, **Normal** or **Chaos**. Passive keeps peaceful play, swimming and social scenes while stopping automatic pranks, unsolicited deliveries and cursor or window interference; sound stays off and explicit requests still work. Normal is the default mischief: deliveries, honks, and following or poking at the cursor without capturing it. Leaving Passive restores the previous mode. |
-| **Options** | Changes the companion, shared outfits, size, selected display, reduced motion, sound and cursor preferences. |
+| **Mode** | **Passive**, **Normal** or **Chaos**. Passive keeps peaceful play, swimming and social scenes while stopping automatic pranks, unsolicited deliveries and cursor or window interference; sound stays off and explicit requests still work. Normal is the default mischief: deliveries, honks, and following or poking at the cursor without capturing it, plus small nudges to the active window. Chaos adds brief cursor captures (at most 1.4 seconds, released with a click) and drags of inactive windows, with more frequent pranks. Leaving Passive restores the previous mode. |
+| **Options** | Changes the companion, outfits, size, selected display, reduced motion, sound and cursor preferences. |
 | **Your content** | Imports pictures, edits notes, opens the content folder, reloads content or copies diagnostics. |
 | **Cleanup / Quit** | Clears objects, closes delivered windows or exits completely. |
 
-The optional companion is a Canada goose. Both geese use the same appearance preference, including **None**, **Scarf** and **Sunhat**; the companion remains a little smaller. The two geese play together on their own: passing a ball, taking turns at fetch, sharing a tug rope, keeping pond company, resting nearby and starting brief chases, with invitations that can be accepted or declined.
+The optional companion is a Canada goose. Both geese dress through the wardrobe: head (**None**, **Sunhat**, **Beanie**), neck (**None**, **Scarf**, **Bow tie**) and glasses (**None**, **Round**), in any combination. Outfits stay linked by default, so a change dresses both geese; dressing one goose separately keeps that slot individual. Open the **Wardrobe** from Options for previews of both geese and for linking or unlinking, or use the quick Outfits controls for linked changes. The companion remains a little smaller.
 
-Random cursor attacks start disabled. A provoked goose chases or honks but never captures the cursor, and a short **Escape** press calls off a chase. The **Chaos** choice is reserved for louder play: its extra pranks are not enabled yet, so it currently plays like Normal.
+Random cursor attacks start disabled; turn them on under Options for louder play. In **Chaos**, a provoked or randomly attacking goose may briefly capture the cursor for at most **1.4 seconds**. **Click the primary mouse button** to release it at once; the click is consumed and never provokes another grab. A short **Escape** press also releases the cursor and calls off a chase, exactly as before. Holding **Escape** for five seconds still dismisses the geese. In Passive and Normal, a provoked goose only chases or honks and never captures the cursor.
+
+In Normal mischief the geese may give the **active window** small nudges while you work. In **Chaos** they may also drag an **inactive window** to a new spot on the same display. They never resize windows, change focus or reorder windows, and never restore positions afterward: windows stay where the geese leave them. Grabbing, moving or resizing a window yourself makes the goose let go of it immediately; typing never cancels a prank. Passive mode stops all window interference.
 
 ## Toys and water
 
@@ -72,7 +74,8 @@ Geese can drag small native note and picture windows onto the desktop. Closing o
 
 ## Dismiss the geese
 
-- **Tap Escape:** call off a chase.
+- **Tap Escape:** call off a chase and release the cursor.
+- **Click (Chaos):** a primary mouse-button press releases a grabbed cursor at once.
 - **Hold Escape for five seconds:** a countdown appears, then every active goose bursts into cartoon feathers and smoke with a soft pop when sound is enabled. Release early to cancel. Reduced motion uses a short fade.
 - **Tray Quit or Ctrl+Alt+Q:** exit immediately.
 
@@ -119,7 +122,7 @@ Old `%LOCALAPPDATA%\DesktopGoose2\settings.json` preferences migrate once when D
 
 | Situation | What to try |
 | --- | --- |
-| You need the desktop back | Tap Escape to call off a chase, or use **Ctrl+Alt+Q** to quit everything. |
+| You need the desktop back | Click to release a grabbed cursor, tap Escape to call off a chase and release the cursor, or use **Ctrl+Alt+Q** to quit everything. |
 | Toys or footprints are in the way | Use **Clear desktop objects** in the tray. |
 | A picture doesn't appear | Check the supported format and limits above, then use **Your content → Reload content**. |
 | A preset edit doesn't apply | Check that the JSON is valid. The last valid configuration remains active if an edit cannot be loaded. |

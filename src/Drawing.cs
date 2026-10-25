@@ -37,6 +37,16 @@ namespace SecondHonk
 
         public static void Goose(Graphics g, Goose goose, float scale, string hat, bool friend, bool reduced)
         {
+            var outfit = new Outfit();
+            if (hat == "Scarf")
+                outfit.Neck = "Scarf";
+            else if (hat == "Sunhat")
+                outfit.Head = "Sunhat";
+            Goose(g, goose, scale, outfit, friend, reduced);
+        }
+
+        public static void Goose(Graphics g, Goose goose, float scale, Outfit outfit, bool friend, bool reduced)
+        {
             V pos = goose.Pos, forward = V.Direction(goose.Direction), headForward = V.Direction(goose.HeadDirection), side = V.Direction(goose.HeadDirection + (float)Math.PI / 2);
             V body = pos + new V(0, -14 * scale), under = pos + new V(0, -9 * scale), neckBase = body + forward * (15 * scale);
             bool asleep = goose.Task == Activity.Sleep && goose.Velocity.Length < 5;
@@ -85,14 +95,28 @@ namespace SecondHonk
                 Circle(g, Color.Black, eyeCenter + eyeSide, 1.6f * scale);
             }
 
-            if (hat == "Scarf")
+            if (outfit == null)
+                outfit = new Outfit();
+            if (outfit.Neck == "Scarf")
             {
                 V scarf = neckBase + (head - neckBase) * .35f;
                 Line(g, Color.FromArgb(195, 66, 43), 5 * scale, scarf - new V(5 * scale, 0), scarf + new V(5 * scale, 0));
                 Line(g, Color.FromArgb(195, 66, 43), 4 * scale, scarf, scarf + new V(-7 * scale, 9 * scale));
             }
 
-            if (hat == "Sunhat")
+            if (outfit.Neck == "BowTie")
+            {
+                V throat = neckBase + (head - neckBase) * .55f;
+                using (var wing = new SolidBrush(Color.FromArgb(178, 58, 64)))
+                {
+                    g.FillPolygon(wing, new[] { P(throat + new V(-12 * scale, 0)), P(throat + new V(-3 * scale, -5 * scale)), P(throat + new V(-3 * scale, 5 * scale)) });
+                    g.FillPolygon(wing, new[] { P(throat + new V(12 * scale, 0)), P(throat + new V(3 * scale, -5 * scale)), P(throat + new V(3 * scale, 5 * scale)) });
+                }
+
+                Circle(g, Color.FromArgb(140, 40, 48), throat, 3 * scale);
+            }
+
+            if (outfit.Head == "Sunhat")
             {
                 using (var b = new SolidBrush(Color.FromArgb(227, 193, 126)))
                 {
@@ -101,6 +125,25 @@ namespace SecondHonk
                 }
 
                 Line(g, Color.FromArgb(163, 93, 60), 2 * scale, head + new V(-6 * scale, -12 * scale), head + new V(6 * scale, -12 * scale));
+            }
+
+            if (outfit.Head == "Beanie")
+            {
+                using (var cap = new SolidBrush(Color.FromArgb(74, 110, 88)))
+                    g.FillEllipse(cap, head.X - 9 * scale, head.Y - 25 * scale, 18 * scale, 13 * scale);
+                Line(g, Color.FromArgb(52, 80, 64), 5 * scale, head + new V(-9 * scale, -13 * scale), head + new V(9 * scale, -13 * scale));
+                Circle(g, Color.FromArgb(240, 235, 215), head + new V(0, -26 * scale), 3 * scale);
+            }
+
+            if (outfit.Glasses == "Round")
+            {
+                using (var ring = new Pen(Color.FromArgb(30, 30, 32), 1.2f * scale))
+                {
+                    foreach (V eye in new[] { eyeCenter - eyeSide, eyeCenter + eyeSide })
+                        g.DrawEllipse(ring, eye.X - 3.4f * scale, eye.Y - 3.4f * scale, 6.8f * scale, 6.8f * scale);
+                }
+
+                Line(g, Color.FromArgb(30, 30, 32), 1.2f * scale, eyeCenter - eyeSide * .72f, eyeCenter + eyeSide * .72f);
             }
 
             if (asleep)
@@ -131,10 +174,10 @@ namespace SecondHonk
             }
 
             if (world.Data.Companion && world.Friend.Pos.Y < world.Goose.Pos.Y)
-                Goose(g, world.Friend, world.GooseScale(world.Friend), world.Data.Hat, true, world.Data.ReducedMotion);
-            Goose(g, world.Goose, world.Scale, world.Data.Hat, false, world.Data.ReducedMotion);
+                Goose(g, world.Friend, world.GooseScale(world.Friend), world.Data.GetOutfit(world.Friend.Id), true, world.Data.ReducedMotion);
+            Goose(g, world.Goose, world.Scale, world.Data.GetOutfit(world.Goose.Id), false, world.Data.ReducedMotion);
             if (world.Data.Companion && world.Friend.Pos.Y >= world.Goose.Pos.Y)
-                Goose(g, world.Friend, world.GooseScale(world.Friend), world.Data.Hat, true, world.Data.ReducedMotion);
+                Goose(g, world.Friend, world.GooseScale(world.Friend), world.Data.GetOutfit(world.Friend.Id), true, world.Data.ReducedMotion);
             foreach (var goose in world.Data.Companion ? new[]
             {
                 world.Goose,
@@ -285,7 +328,7 @@ namespace SecondHonk
                     using (var bg = Graphics.FromImage(bitmap))
                     {
                         bg.TranslateTransform(100 - goose.Pos.X, 140 - goose.Pos.Y);
-                        Goose(bg, goose, w.GooseScale(goose), w.Data.Hat, friend, true);
+                        Goose(bg, goose, w.GooseScale(goose), w.Data.GetOutfit(goose.Id), friend, true);
                     }
 
                     using (var attributes = new System.Drawing.Imaging.ImageAttributes())

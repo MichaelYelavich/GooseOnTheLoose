@@ -20,7 +20,7 @@ A spiritual successor to Desktop Goose, made for Windows 11.
 
 **Goose on the Loose is an independent spiritual successor to [Desktop Goose by Samperson](https://samperson.itch.io/desktop-goose).** It keeps the desktop geese, adds toys, water and native tools, and focuses on reliability and performance.
 
-Your goose wanders across your desktop, honks, fetches sticks and brings you pictures and notes. Add a Canada goose for company, drop a pond beside your work, or leave out a ball and see what happens. When provoked, they chase or honk — but never capture the cursor.
+Your goose wanders across your desktop, honks, fetches sticks and brings you pictures and notes. Add a Canada goose for company, drop a pond beside your work, or leave out a ball and see what happens. Turn up the mischief and they will nudge your active window, drag idle ones aside, and — only in Chaos — briefly steal your cursor back.
 
 Everything happens directly on the desktop. Controls live in the tray, and the Toy Box opens when you want it. No account is needed, and the game runs offline.
 
@@ -28,7 +28,7 @@ Everything happens directly on the desktop. Controls live in the tray, and the T
 
 | | On your desktop |
 | --- | --- |
-| **Two geese** | A white goose and an optional Canada goose companion. Shared scarves, sunhats and size settings. |
+| **Two geese** | A white goose and an optional Canada goose companion. Linked wardrobes with sunhats, beanies, scarves, bow ties and round glasses, plus size settings. |
 | **A proper Toy Box** | Balls, fetch sticks, tug ropes, peas, rubber ducks, ponds, puddles and mud patches. Place up to 16 objects. |
 | **Water and muddy feet** | Swimming, ripples, floating ducks and fading wet or muddy footprints. Clean water washes mud away. |
 | **Personal mischief** | Geese deliver your pictures and ordinary text notes in small native windows. |
@@ -49,7 +49,7 @@ Requires **Windows 11**. Its included .NET Framework is sufficient; players don'
 2. Open **Toy Box** and drag a toy or patch of water onto the selected display.
 3. Open **Options** to invite the second goose, choose an outfit or adjust the mischief.
 
-**Need your cursor back?** Tap **Escape**. To dismiss everything, hold Escape for **five seconds** and watch the geese burst into cartoon feathers. Release early to cancel. Tray **Quit** or **Ctrl+Alt+Q** exits immediately.
+**Need your cursor back?** Click the mouse button, or tap **Escape**. To dismiss everything, hold Escape for **five seconds** and watch the geese burst into cartoon feathers. Release early to cancel. Tray **Quit** or **Ctrl+Alt+Q** exits immediately.
 
 The installer is currently unsigned. See the [player guide](docs/PLAYING.md) for installation, all shortcuts and cleanup controls.
 

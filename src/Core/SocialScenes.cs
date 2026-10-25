@@ -32,6 +32,10 @@ namespace SecondHonk
         public DesktopObject Prop;
         public float Timer, ExchangeIn, AnswerIn, EndIn;
         public int Turn, Exchanges, ExchangesNeeded;
+        // Coordinated-prank tick (Trouble only): counts action-time prank
+        // attempts so offsets vary without consuming simulation randomness.
+        public float PrankIn;
+        public int PrankCount;
         public V SpotA, SpotB, SpotMid;
         public bool Intrusive, SecondHonkDone, Carrying;
     }
@@ -369,6 +373,8 @@ namespace SecondHonk
                     break;
                 case SceneKind.Trouble:
                     scene.Timer = 6 + (float)random.NextDouble() * 3;
+                    scene.PrankIn = 1.5f;
+                    scene.PrankCount = 0;
                     break;
             }
 
@@ -488,6 +494,13 @@ namespace SecondHonk
                         scene.SecondHonkDone = true;
                     }
 
+                    scene.PrankIn -= dt;
+                    if (scene.PrankIn <= 0 && scene.Timer > 1)
+                    {
+                        scene.PrankIn = 2.5f;
+                        CoordinatedPrank(w, scene);
+                    }
+
                     if (scene.Timer <= 0)
                     {
                         scene.Phase = ScenePhase.Ending;
@@ -499,6 +512,30 @@ namespace SecondHonk
             }
 
             return true;
+        }
+
+        // Coordinated pair prank (Card 4). The CURRENT mode at the moment of
+        // the action decides what the pair may use, even if the scene started
+        // in another mode: grabs and window drags only in Chaos, small
+        // active-window nudges in Normal, nothing in Passive (where Trouble
+        // cannot run anyway). Offsets step around the golden angle so repeated
+        // pranks vary without consuming simulation randomness.
+        void CoordinatedPrank(World w, SocialScene scene)
+        {
+            Goose actor = scene.PrankCount % 2 == 0 ? scene.Leader : scene.Follower;
+            float angle = scene.PrankCount * 2.39996f;
+            scene.PrankCount++;
+            V direction = new V((float)Math.Cos(angle), (float)Math.Sin(angle));
+            string mode = w.Data.Mode;
+            if (mode == "Chaos")
+            {
+                w.TryGrabCursor(actor);
+                w.RequestDrag(actor, direction * (WindowBroker.DragMaxDistance * .8f));
+            }
+            else if (mode == "Normal")
+            {
+                w.RequestNudge(actor, direction * (WindowBroker.NudgeMaxDistance * .8f));
+            }
         }
 
         public void Steer(World w, Goose actor, float dt, ref V target, ref float speed, ref bool offscreen)

@@ -15,6 +15,11 @@ namespace SecondHonk
         public readonly List<DesktopObject> Objects = new List<DesktopObject>();
         public readonly PlayCoordinator Coordinator = new PlayCoordinator();
         public readonly SocialScenes Scenes;
+        public readonly WindowBroker Broker = new WindowBroker();
+        // Window candidates for pranks. Null headless and in tests: prank
+        // requests then fail cleanly without owners or cooldowns. The native
+        // session attaches the real adapter; tests inject fakes.
+        public IWindowSystem Windows;
         public Behavior Behavior = new Behavior();
         public bool Editing, Exploding;
         public float DismissRemaining, ExplosionTime;
@@ -26,9 +31,15 @@ namespace SecondHonk
         // reduced repeat credit instead of the full varied credit.
         readonly System.Collections.Generic.Dictionary<SceneKind, float> lastBondCredit = new System.Collections.Generic.Dictionary<SceneKind, float>();
         bool parkFriendAfterDelivery;
-        public float Width = 1280, Height = 752, Time, GrabRemaining, QuietRemaining;
+        public float Width = 1280, Height = 752, Time, GrabRemaining, GrabCooldownRemaining, QuietRemaining;
         public V Pointer, GrabTarget;
         public bool Paused;
+        // Cursor grabs exist only in Chaos (Card 4): at most 1.4 simulated
+        // seconds of holding, released by a primary click (consumed, so it
+        // never provokes another grab) or when the timer lapses, then a
+        // brief re-grab cooldown. Either goose may own a grab, never both.
+        public const float GrabMaxHold = 1.4f;
+        public const float GrabRegrabCooldown = 3;
         public int Meals, Fetches, Kicks, Deliveries;
         public string DeliveryText = "", DeliveryImage = "";
         public event Action<Goose> Honked, FootLanded, DeliveryStarted, DeliveryCompleted;
@@ -268,6 +279,7 @@ namespace SecondHonk
         {
             CancelAll();
             Coordinator.Clear();
+            Broker.CancelAll();
             parkFriendAfterDelivery = false;
             Objects.Clear();
             ball = stick = null;
@@ -338,6 +350,38 @@ namespace SecondHonk
                 GrabRemaining = 0;
                 Coordinator.ReleaseCursor(actor);
             }
+        }
+
+        // Chaos-only grab attempt for the acting goose. Deterministic: the
+        // caller (a provoked chase, a random attack, a coordinated prank)
+        // decides when to try; this only enforces the Chaos gate, single
+        // ownership and the re-grab cooldown. Never extends an owned grab.
+        public bool TryGrabCursor(Goose actor)
+        {
+            if (actor == null || Paused || Data.Mode != "Chaos" || !Data.MouseSteal)
+                return false;
+            if (Coordinator.CursorOwner == actor)
+                return true;
+            if (GrabRemaining > 0 || GrabCooldownRemaining > 0)
+                return false;
+            if (!Coordinator.TryAcquireCursor(actor))
+                return false;
+            GrabRemaining = GrabMaxHold;
+            GrabTarget = Pointer;
+            return true;
+        }
+
+        // A primary button press releases a stolen cursor. The press is
+        // consumed by the caller so it never instantly provokes another
+        // grab; the re-grab cooldown guards the rest. Never dismisses.
+        public void NotifyPrimaryClick()
+        {
+            Goose owner = Coordinator.CursorOwner;
+            if (GrabRemaining <= 0 || owner == null)
+                return;
+            GrabRemaining = 0;
+            Coordinator.ReleaseCursor(owner);
+            GrabCooldownRemaining = Math.Max(GrabCooldownRemaining, GrabRegrabCooldown);
         }
 
         public void SetTask(Activity task)
@@ -502,6 +546,7 @@ namespace SecondHonk
 
             Paused = paused;
             ReleaseCursorAll();
+            Broker.CancelAll();
             if (paused)
             {
                 Scenes.Cancel(this);
@@ -538,9 +583,18 @@ namespace SecondHonk
             if (actor == null || Paused)
                 return;
             Pointer = Clamp(p);
-            ReleaseCursorFor(actor);
+            // A goose that already holds the cursor keeps its remaining
+            // time: re-provoking never extends a grab past the cap.
+            bool owned = Coordinator.CursorOwner == actor;
+            if (!owned)
+                ReleaseCursorFor(actor);
             actor.Auto = false;
             SetTaskActor(actor, Activity.Chase);
+            // Provoked grabs exist only in Chaos. Any chase there may
+            // capture; elsewhere the goose only pursues. TryGrabCursor
+            // enforces the mode gate, ownership and cooldown.
+            if (!owned)
+                TryGrabCursor(actor);
             Honk(actor);
         }
 
@@ -735,6 +789,60 @@ namespace SecondHonk
             Honk(actor);
         }
 
+        // Coordinated window pranks (Card 4). The window reservation is
+        // exclusive per goose; the broker enforces the mode gate, target
+        // eligibility, single manipulation and cooldowns at action time.
+        public bool RequestNudge(Goose actor, V offset)
+        {
+            if (actor == null || Paused || Windows == null)
+                return false;
+            IWindowTarget target = Windows.ActiveWindow();
+            if (target == null)
+                return false;
+            if (!Coordinator.TryAcquireWindow(actor))
+                return false;
+            if (!Broker.TryNudge(target, offset, () => Data.Mode))
+            {
+                Coordinator.ReleaseWindow(actor);
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool RequestDrag(Goose actor, V offset)
+        {
+            if (actor == null || Paused || Windows == null)
+                return false;
+            IWindowTarget target = null;
+            foreach (IWindowTarget candidate in Windows.InactiveWindows())
+            {
+                if (candidate == null)
+                    continue;
+                // Never stack onto a window already running or queued: pick
+                // a free target so queued pranks spread across windows.
+                // Compared by id: adapters may wrap one window per call.
+                if (Broker.Active != null && Broker.Active.Target.Id == candidate.Id)
+                    continue;
+                if (Broker.Pending != null && Broker.Pending.Target.Id == candidate.Id)
+                    continue;
+                target = candidate;
+                break;
+            }
+
+            if (target == null)
+                return false;
+            if (!Coordinator.TryAcquireWindow(actor))
+                return false;
+            if (!Broker.TryDrag(target, target.Position + offset, () => Data.Mode))
+            {
+                Coordinator.ReleaseWindow(actor);
+                return false;
+            }
+
+            return true;
+        }
+
         public void SetMode(string mode)
         {
             if (mode != "Passive" && mode != "Normal" && mode != "Chaos")
@@ -758,6 +866,7 @@ namespace SecondHonk
             Data.Quiet = IsPassive;
             QuietRemaining = 0;
             ReleaseCursorAll();
+            Broker.CancelAll();
         }
 
         public void SetQuiet(bool quiet)
@@ -1008,6 +1117,23 @@ namespace SecondHonk
             if (Data.Companion)
                 Friend.BallCooldown -= dt;
             Coordinator.Update(dt);
+            if (GrabCooldownRemaining > 0)
+                GrabCooldownRemaining = Math.Max(0, GrabCooldownRemaining - dt);
+            if (GrabRemaining > 0)
+            {
+                GrabRemaining -= dt;
+                if (GrabRemaining <= 0)
+                {
+                    GrabRemaining = 0;
+                    Coordinator.CursorOwner = null;
+                    GrabCooldownRemaining = Math.Max(GrabCooldownRemaining, GrabRegrabCooldown);
+                }
+            }
+
+            Broker.Display = new V(Width, Height);
+            Broker.Update(dt);
+            if (!Broker.Busy && Coordinator.WindowOwner != null)
+                Coordinator.ReleaseWindow(Coordinator.WindowOwner);
             for (int i = Marks.Count - 1; i >= 0; i--)
             {
                 Marks[i].Age += dt;

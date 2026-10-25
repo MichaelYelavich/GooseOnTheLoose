@@ -28,6 +28,8 @@ namespace SecondHonk
         DesktopOverlay toys;
         ToyBox toolbox;
         NoteEditor editor;
+        WardrobeWindow wardrobe;
+        SystemWindowAdapter windowAdapter;
         readonly ContentMonitor contentMonitor;
         readonly ShutdownClock shutdown = new ShutdownClock();
         GooseWindow carried;
@@ -128,6 +130,16 @@ namespace SecondHonk
             list.Add(item);
         }
 
+        void AddLinkedSlot(ToolStripMenuItem list, OutfitSlot slot, string value)
+        {
+            var item = Item(list.DropDownItems, value, () =>
+            {
+                World.Data.SetLinkedSlot(slot, value);
+                Store.Save(World.Data);
+            });
+            menu.Opening += (s, e) => item.Checked = World.Data.GetOutfitSlot(0, slot) == value && World.Data.GetOutfitSlot(1, slot) == value;
+        }
+
         void BuildMenu()
         {
             Item(menu.Items, "Toy Box", ShowToolbox);
@@ -159,7 +171,7 @@ namespace SecondHonk
             )
             {
                 string value = choice;
-                string title = value == "Passive" ? "Passive                      Ctrl+Alt+K" : value == "Normal" ? "Normal" : "Chaos (quieter for now)";
+                string title = value == "Passive" ? "Passive                      Ctrl+Alt+K" : value == "Normal" ? "Normal" : "Chaos";
                 var item = Item(mode.DropDownItems, title, () =>
                 {
                     SetMode(value);
@@ -184,25 +196,38 @@ namespace SecondHonk
                 World.QuietRemaining = 25 * 60;
                 Store.Save(World.Data);
             });
-            var hats = new ToolStripMenuItem("Appearance");
-            options.DropDownItems.Add(hats);
-            foreach (string hat in new[]
+            var outfits = new ToolStripMenuItem("Outfits");
+            options.DropDownItems.Add(outfits);
+            Item(outfits.DropDownItems, "Wardrobe…", ShowWardrobe);
+            outfits.DropDownItems.Add(new ToolStripSeparator());
+            var headMenu = new ToolStripMenuItem("Head (both geese)");
+            var neckMenu = new ToolStripMenuItem("Neck (both geese)");
+            var glassesMenu = new ToolStripMenuItem("Glasses (both geese)");
+            outfits.DropDownItems.Add(headMenu);
+            outfits.DropDownItems.Add(neckMenu);
+            outfits.DropDownItems.Add(glassesMenu);
+            foreach (string value in OutfitCatalog.Heads)
+                AddLinkedSlot(headMenu, OutfitSlot.Head, value);
+            foreach (string value in OutfitCatalog.Necks)
+                AddLinkedSlot(neckMenu, OutfitSlot.Neck, value);
+            foreach (string value in OutfitCatalog.Glasses)
+                AddLinkedSlot(glassesMenu, OutfitSlot.Glasses, value);
+            var matchWhite = Item(outfits.DropDownItems, "Match both to White's outfit", () =>
             {
-                "None",
-                "Scarf",
-                "Sunhat"
-            }
-
-            )
+                World.Data.SetOutfitsLinked(true, 0);
+                Store.Save(World.Data);
+            });
+            var matchCanada = Item(outfits.DropDownItems, "Match both to Canada's outfit", () =>
             {
-                string value = hat;
-                var item = Item(hats.DropDownItems, hat == "None" ? "No accessories" : hat, () =>
-                {
-                    World.Data.Hat = value;
-                    Store.Save(World.Data);
-                });
-                menu.Opening += (s, e) => item.Checked = World.Data.Hat == value;
-            }
+                World.Data.SetOutfitsLinked(true, 1);
+                Store.Save(World.Data);
+            });
+            menu.Opening += (s, e) =>
+            {
+                bool linked = World.Data.LinkedOutfits;
+                headMenu.Visible = neckMenu.Visible = glassesMenu.Visible = linked;
+                matchWhite.Visible = matchCanada.Visible = !linked;
+            };
 
             var sizes = new ToolStripMenuItem("Size");
             options.DropDownItems.Add(sizes);
@@ -303,6 +328,18 @@ namespace SecondHonk
             toolbox.Activate();
         }
 
+        internal void ShowWardrobe()
+        {
+            if (wardrobe == null || wardrobe.IsDisposed)
+            {
+                wardrobe = new WardrobeWindow(World);
+                wardrobe.FormClosed += (s, e) => paintedPause = false;
+            }
+
+            wardrobe.Show();
+            wardrobe.Activate();
+        }
+
         void CopyDiagnostics()
         {
             try
@@ -338,6 +375,13 @@ namespace SecondHonk
 
         void ChooseMonitor(string device)
         {
+            if (windowAdapter != null)
+            {
+                World.Windows = null;
+                windowAdapter.Dispose();
+                windowAdapter = null;
+            }
+
             if (toys != null)
             {
                 toys.Close();
@@ -358,9 +402,52 @@ namespace SecondHonk
             toys.Changed += () => paintedPause = false;
             overlay.Show();
             toys.Show();
+            try
+            {
+                windowAdapter = new SystemWindowAdapter(area, IsOwnedWindow);
+                windowAdapter.UserIntervened += World.Broker.NotifyUserIntervention;
+                World.Windows = windowAdapter;
+            }
+            catch (Exception error)
+            {
+                Program.Log(error);
+                windowAdapter = null;
+                World.Windows = null;
+            }
+
             World.Update(0);
             overlay.RenderFrame();
             toys.RenderFrame();
+        }
+
+        bool IsOwnedWindow(IntPtr handle)
+        {
+            if (handle == IntPtr.Zero)
+                return true;
+            try
+            {
+                if (overlay != null && !overlay.IsDisposed && overlay.Handle == handle)
+                    return true;
+                if (toys != null && !toys.IsDisposed && toys.Handle == handle)
+                    return true;
+                if (toolbox != null && !toolbox.IsDisposed && toolbox.Handle == handle)
+                    return true;
+                if (wardrobe != null && !wardrobe.IsDisposed && wardrobe.Handle == handle)
+                    return true;
+                if (editor != null && !editor.IsDisposed && editor.Handle == handle)
+                    return true;
+                if (dialogOwner != null && !dialogOwner.IsDisposed && dialogOwner.Handle == handle)
+                    return true;
+                foreach (var window in windows)
+                    if (window != null && !window.IsDisposed && window.Handle == handle)
+                        return true;
+            }
+            catch (Exception error)
+            {
+                Program.Log(error);
+            }
+
+            return false;
         }
 
         void ClearNotes()
@@ -571,11 +658,19 @@ namespace SecondHonk
             bool left = (Native.GetAsyncKeyState(1) & 0x8000) != 0;
             if (left && !leftWasDown && !World.Paused && !escape && !World.Objects.Any(o => o.Dragging))
             {
-                if (V.Distance(pointer, World.Goose.Pos - new V(0, 18 * World.Scale)) < 32 * World.Scale)
+                if (World.HoldingCursor)
+                {
+                    // Primary-click release (Chaos): consumed here, so this
+                    // press never provokes another grab. Never dismisses.
+                    World.NotifyPrimaryClick();
+                }
+                else if (V.Distance(pointer, World.Goose.Pos - new V(0, 18 * World.Scale)) < 32 * World.Scale)
                     World.Chase(pointer);
             }
 
             leftWasDown = left;
+            if (windowAdapter != null)
+                windowAdapter.Poll();
             World.Update(dt);
             if (World.HoldingCursor && !escape)
             {
@@ -632,6 +727,8 @@ namespace SecondHonk
                 toys.ReleaseDrag();
                 if (toolbox != null)
                     toolbox.Close();
+                if (wardrobe != null)
+                    wardrobe.Close();
                 if (editor != null)
                     editor.CloseForShutdown();
                 World.ClearProps();
@@ -753,8 +850,16 @@ namespace SecondHonk
             ClearNotes();
             if (toolbox != null)
                 toolbox.Close();
+            if (wardrobe != null)
+                wardrobe.Close();
             if (editor != null)
                 editor.CloseForShutdown();
+            if (windowAdapter != null)
+            {
+                World.Windows = null;
+                windowAdapter.Dispose();
+                windowAdapter = null;
+            }
             if (toys != null)
             {
                 toys.ReleaseDrag();
