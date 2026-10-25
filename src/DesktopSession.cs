@@ -14,6 +14,7 @@ namespace SecondHonk
     public sealed class DesktopSession : ApplicationContext
     {
         public readonly World World;
+        public bool DevMode;
         readonly NotifyIcon tray = new NotifyIcon();
         readonly ContextMenuStrip menu = new ContextMenuStrip();
         readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
@@ -26,6 +27,8 @@ namespace SecondHonk
         readonly Dictionary<string, EventWaitHandle> signals = new Dictionary<string, EventWaitHandle>();
         DesktopOverlay overlay;
         DesktopOverlay toys;
+        internal DevOverlay dev;
+        float fps;
         ToyBox toolbox;
         NoteEditor editor;
         WardrobeWindow wardrobe;
@@ -92,6 +95,8 @@ namespace SecondHonk
             Microsoft.Win32.SystemEvents.SessionEnding += SessionEnding;
             if (initialCommand.Length > 0 && signals.ContainsKey(initialCommand))
                 signals[initialCommand].Set();
+            DevMode = initialCommand == "dev";
+            RefreshDevOverlay();
             WriteStatus();
         }
 
@@ -373,6 +378,31 @@ namespace SecondHonk
             }
         }
 
+        internal void RefreshDevOverlay()
+        {
+            // Created in test sessions too (offscreen, like the other
+            // overlays) so regressions can confirm the panels initialize
+            // under --dev and stay off without it.
+            if (!DevMode)
+            {
+                if (dev != null)
+                {
+                    dev.Close();
+                    dev.Dispose();
+                    dev = null;
+                }
+
+                return;
+            }
+
+            if (dev == null || dev.IsDisposed)
+            {
+                dev = new DevOverlay(World);
+                dev.Location = new Point(overlay.Area.X + 8, overlay.Area.Y + 8);
+                dev.Show();
+            }
+        }
+
         void ChooseMonitor(string device)
         {
             if (windowAdapter != null)
@@ -380,6 +410,13 @@ namespace SecondHonk
                 World.Windows = null;
                 windowAdapter.Dispose();
                 windowAdapter = null;
+            }
+
+            if (dev != null)
+            {
+                dev.Close();
+                dev.Dispose();
+                dev = null;
             }
 
             if (toys != null)
@@ -402,6 +439,7 @@ namespace SecondHonk
             toys.Changed += () => paintedPause = false;
             overlay.Show();
             toys.Show();
+            RefreshDevOverlay();
             try
             {
                 windowAdapter = new SystemWindowAdapter(area, IsOwnedWindow);
@@ -426,6 +464,8 @@ namespace SecondHonk
                 return true;
             try
             {
+                if (dev != null && !dev.IsDisposed && dev.Handle == handle)
+                    return true;
                 if (overlay != null && !overlay.IsDisposed && overlay.Handle == handle)
                     return true;
                 if (toys != null && !toys.IsDisposed && toys.Handle == handle)
@@ -613,6 +653,10 @@ namespace SecondHonk
                 case 115:
                     CopyDiagnostics();
                     break;
+                case 116:
+                    DevMode = !DevMode;
+                    RefreshDevOverlay();
+                    break;
                 case 114:
                     toys.ReleaseDrag();
                     World.ClearProps();
@@ -633,6 +677,9 @@ namespace SecondHonk
             double now = watch.Elapsed.TotalSeconds;
             float elapsed = (float)(now - lastTime);
             lastTime = now;
+            fps = elapsed > 0 ? 1 / elapsed : 0;
+            if (dev != null && !dev.IsDisposed)
+                dev.RefreshStats(fps, elapsed * 1000);
             float dt = Math.Min(.1f, elapsed);
             World.AdvanceQuiet(Math.Max(0, elapsed - dt));
             bool escape = (Native.GetAsyncKeyState(27) & 0x8000) != 0;
@@ -860,6 +907,13 @@ namespace SecondHonk
                 windowAdapter.Dispose();
                 windowAdapter = null;
             }
+            if (dev != null)
+            {
+                dev.Close();
+                dev.Dispose();
+                dev = null;
+            }
+
             if (toys != null)
             {
                 toys.ReleaseDrag();

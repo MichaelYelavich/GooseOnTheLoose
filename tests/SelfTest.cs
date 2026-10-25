@@ -180,6 +180,7 @@ namespace SecondHonk
                 SocialModeTests.Run(content, Assert);
                 BondContentTests.Run(content, Assert);
                 ChaosWardrobeTests.Run(content, Assert);
+                DevModeTests.Run(content, Assert);
                 results.Add("\nAll " + results.Count + " desktop checks passed. Windows " + Environment.OSVersion.Version + ".");
                 Environment.ExitCode = 0;
             }

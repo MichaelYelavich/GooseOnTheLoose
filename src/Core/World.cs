@@ -234,6 +234,10 @@ namespace SecondHonk
         // paused), so pausing, idle process time and system-clock changes add
         // nothing.
         const float FullCredit = .0008f, RepeatCredit = .00012f, RepeatCooldown = 300;
+        // Recent accrual events for the dev overlay. Read-only display log:
+        // recording an entry changes no accrual, pacing or persistence.
+        public readonly List<string> BondLog = new List<string>();
+        const int BondLogMax = 8;
         public void CreditBond(SceneKind kind)
         {
             if (!Data.Companion || Paused)
@@ -242,6 +246,9 @@ namespace SecondHonk
             float credit = lastBondCredit.TryGetValue(kind, out last) && Time - last < RepeatCooldown ? RepeatCredit : FullCredit;
             lastBondCredit[kind] = Time;
             Data.Bond = Math.Min(1, Data.Bond + credit);
+            BondLog.Add(string.Format("+{0:F5} {1} t={2:F1}s", credit, kind, Time));
+            if (BondLog.Count > BondLogMax)
+                BondLog.RemoveAt(0);
         }
 
         public V Clamp(V p)

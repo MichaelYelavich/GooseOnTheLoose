@@ -36,7 +36,8 @@ namespace SecondHonk
             new GooseCommand("content-folder", 112, Keys.None),
             new GooseCommand("reload", 113, Keys.None),
             new GooseCommand("clear", 114, Keys.None),
-            new GooseCommand("diagnostics", 115, Keys.None)
+            new GooseCommand("diagnostics", 115, Keys.None),
+            new GooseCommand("dev", 116, Keys.None)
         };
         public static GooseCommand Find(string name)
         {
