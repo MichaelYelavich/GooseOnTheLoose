@@ -6,7 +6,7 @@ Goose on the Loose is an independent spiritual successor to Desktop Goose. The a
 
 These are priorities, not a dated release schedule. Beta feedback will shape the order within each stage. Planned items below are not claims about features already available.
 
-## Here now · Beta Release 1
+## Here now · Beta Release 2
 
 Two desktop geese, shared outfits, seven kinds of toys and water, wet and muddy footprints, picture and note delivery, native tray tools and editable content. The game works on one selected display at a time.
 

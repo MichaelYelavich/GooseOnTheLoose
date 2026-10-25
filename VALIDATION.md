@@ -1,6 +1,8 @@
-# Beta Release 1 — validation
+# Beta Release 2 — validation
 
-Release: Goose on the Loose 0.4.0-beta.1. Test host: Windows 11 build 26300, x64, .NET Framework 4.8. Developer SDK: 10.0.402; Inno Setup: 6.7.3. The application and test runner report the real Windows version through their manifest.
+Release: Goose on the Loose 0.5.0-beta.1. Test host: Windows 11 build 26300, x64, .NET Framework 4.8. Developer SDK: 10.0.402; Inno Setup: 6.7.3. The application and test runner report the real Windows version through their manifest.
+
+Beta 1 evidence below (142 application checks, 17 native checks, installer and package checks against 0.3.1) is retained as the baseline: the Beta 2 change set carries Cards 1–4 behavior work on the same build and packaging pipeline. Beta 2 packaging verification follows in its own section at the end.
 
 ## Regressions and native checks
 

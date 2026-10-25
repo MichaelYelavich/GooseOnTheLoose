@@ -2,17 +2,17 @@
 
 An independent spiritual successor to [Desktop Goose by Samperson](https://samperson.itch.io/desktop-goose), with geese that live directly on your Windows 11 desktop.
 
-[← Back to the README](../README.md) · [Get Beta Release 1](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.4.0-beta.1)
+[← Back to the README](../README.md) · [Get Beta Release 2](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.5.0-beta.1)
 
 ## Install and play
 
-**Installer:** double-click **GooseOnTheLoose-Beta1-Setup.exe**. It installs for your Windows account and creates a Start menu shortcut. Administrator access is not required. Desktop and Windows-startup shortcuts are optional and start unchecked.
+**Installer:** double-click **GooseOnTheLoose-Beta2-Setup.exe**. It installs for your Windows account and creates a Start menu shortcut. Administrator access is not required. Desktop and Windows-startup shortcuts are optional and start unchecked.
 
 Fresh installations use `%LOCALAPPDATA%\Programs\GooseOnTheLoose`. Upgrades retain the existing installation directory, preferences and custom content. Uninstall removes the application and shortcuts while keeping your Documents content.
 
 **Portable:** extract the entire Windows ZIP and run **GooseOnTheLoose.exe**. Keep all extracted files and folders together, including **Goose.Core.dll**, the executable's configuration file, **Assets** and **Packs**.
 
-Windows 11's included .NET Framework is sufficient. No account, network connection or extra runtime download is required. The installer is unsigned; download it from the project's [GitHub release page](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.4.0-beta.1).
+Windows 11's included .NET Framework is sufficient. No account, network connection or extra runtime download is required. The installer is unsigned; download it from the project's [GitHub release page](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.5.0-beta.1).
 
 ## The tray menu
 
