@@ -166,6 +166,7 @@ namespace SecondHonk
                     // Legacy files name the shared Hat but no per-goose
                     // slots; migrate before validating the new fields.
                     SaveData.MigrateLegacyJson(data, snapshot.Settings);
+                    SaveData.MigrateRenamedSlots(data);
                     data.ValidateSlots();
                     data.Normalize();
                     if (!initializing)

@@ -28,7 +28,7 @@ Everything happens directly on the desktop. Controls live in the tray, and the T
 
 | | On your desktop |
 | --- | --- |
-| **Two geese** | A white goose and an optional Canada goose companion. Linked wardrobes with sunhats, beanies, scarves, bow ties and round glasses, plus size settings. |
+| **Two geese** | A white goose and an optional Canada goose companion. Linked wardrobes with sunhats, toques, scarves, bow ties and round glasses, plus size settings. |
 | **A proper Toy Box** | Balls, fetch sticks, tug ropes, peas, rubber ducks, ponds, puddles and mud patches. Place up to 16 objects. |
 | **Water and muddy feet** | Swimming, ripples, floating ducks and fading wet or muddy footprints. Clean water washes mud away. |
 | **Personal mischief** | Geese deliver your pictures and ordinary text notes in small native windows. |

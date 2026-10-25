@@ -127,7 +127,7 @@ namespace SecondHonk
                 Line(g, Color.FromArgb(163, 93, 60), 2 * scale, head + new V(-6 * scale, -12 * scale), head + new V(6 * scale, -12 * scale));
             }
 
-            if (outfit.Head == "Beanie")
+            if (outfit.Head == "Toque")
             {
                 using (var cap = new SolidBrush(Color.FromArgb(74, 110, 88)))
                     g.FillEllipse(cap, head.X - 9 * scale, head.Y - 25 * scale, 18 * scale, 13 * scale);

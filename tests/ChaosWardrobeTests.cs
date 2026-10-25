@@ -165,20 +165,23 @@ namespace SecondHonk
                 check(migrated.Hat == "None" && migrated.LinkedOutfits, "Legacy bare profiles stay linked with empty slots");
 
                 var dressed = new SaveData();
-                dressed.SetOutfitSlot(0, OutfitSlot.Head, "Beanie");
+                dressed.SetOutfitSlot(0, OutfitSlot.Head, "Toque");
                 dressed.SetOutfitSlot(1, OutfitSlot.Neck, "BowTie");
                 dressed.SetOutfitSlot(1, OutfitSlot.Glasses, "Round");
                 dressed.SetOutfitsLinked(false, 0);
                 check(Store.Save(dressed), "Linked and individual outfits save");
                 check(Store.Save(dressed), "Wardrobe preferences save atomically");
                 var loaded = Store.Load();
-                check(loaded.WhiteHead == "Beanie" && loaded.CanadaNeck == "BowTie" && loaded.CanadaGlasses == "Round", "Wardrobe selections survive a restart");
+                check(loaded.WhiteHead == "Toque" && loaded.CanadaNeck == "BowTie" && loaded.CanadaGlasses == "Round", "Wardrobe selections survive a restart");
                 check(!loaded.LinkedOutfits && loaded.WhiteHeadOwn && loaded.CanadaNeckOwn && loaded.CanadaGlassesOwn && !loaded.CanadaHeadOwn, "Per-goose override flags survive a restart");
                 check(!File.ReadAllText(Path.Combine(Store.Root, "settings.json")).Contains("\"Hat\""), "Modern saves carry per-goose slots instead of the legacy alias");
 
+                File.WriteAllText(Path.Combine(Store.Root, "settings.json"), "{\"Version\":2,\"WhiteHead\":\"Beanie\",\"CanadaHead\":\"Beanie\"}");
+                var renamed = Store.Load();
+                check(renamed.WhiteHead == "Toque" && renamed.CanadaHead == "Toque", "Beta 2 beanies load as toques");
                 File.WriteAllText(Path.Combine(Store.Root, "settings.json"), "{\"Version\":2,\"WhiteHead\":\"TopHat\"}");
                 var recovered = Store.Load();
-                check(recovered.WhiteHead == "Beanie" && recovered.CanadaNeck == "BowTie", "Invalid outfits recover the previous backup");
+                check(recovered.WhiteHead == "Toque" && recovered.CanadaNeck == "BowTie", "Invalid outfits recover the previous backup");
             }
             finally
             {
@@ -186,10 +189,10 @@ namespace SecondHonk
             }
 
             var linked = new SaveData();
-            linked.SetLinkedSlot(OutfitSlot.Head, "Beanie");
-            check(linked.WhiteHead == "Beanie" && linked.CanadaHead == "Beanie", "Linked changes apply to both geese by default");
+            linked.SetLinkedSlot(OutfitSlot.Head, "Toque");
+            check(linked.WhiteHead == "Toque" && linked.CanadaHead == "Toque", "Linked changes apply to both geese by default");
             linked.SetOutfitSlot(1, OutfitSlot.Head, "Sunhat");
-            check(linked.CanadaHead == "Sunhat" && linked.WhiteHead == "Beanie" && linked.SlotIndividuallySet(1, OutfitSlot.Head), "Dressing one goose flags its slot as individually set");
+            check(linked.CanadaHead == "Sunhat" && linked.WhiteHead == "Toque" && linked.SlotIndividuallySet(1, OutfitSlot.Head), "Dressing one goose flags its slot as individually set");
             linked.SetLinkedSlot(OutfitSlot.Head, "None");
             check(linked.WhiteHead == "None" && linked.CanadaHead == "Sunhat", "Linked changes leave individually set slots alone");
             linked.SetLinkedSlot(OutfitSlot.Neck, "Scarf");
@@ -202,13 +205,13 @@ namespace SecondHonk
             check(linked.LinkedOutfits && linked.WhiteGlasses == "None" && !linked.WhiteHeadOwn && !linked.CanadaNeckOwn, "Relinking copies the chosen goose to both and clears individual flags");
 
             var w = New(content, true);
-            w.Data.SetOutfitSlot(1, OutfitSlot.Head, "Beanie");
+            w.Data.SetOutfitSlot(1, OutfitSlot.Head, "Toque");
             w.SetCompanion(false);
             w.SetCompanion(true);
-            check(w.Data.CanadaHead == "Beanie", "Canada's outfit survives disabling and re-enabling the companion");
+            check(w.Data.CanadaHead == "Toque", "Canada's outfit survives disabling and re-enabling the companion");
 
             var alias = new SaveData();
-            alias.SetOutfitSlot(0, OutfitSlot.Head, "Beanie");
+            alias.SetOutfitSlot(0, OutfitSlot.Head, "Toque");
             alias.SetOutfitSlot(0, OutfitSlot.Neck, "Scarf");
             check(alias.Hat == "Scarf" || alias.Hat == "None" || alias.Hat == "Sunhat", "Modern combinations always derive a valid legacy alias");
             alias.ApplyLegacyHat("BowTie");
@@ -451,7 +454,7 @@ namespace SecondHonk
         static void Rendering(Content content, Action<bool, string> check)
         {
             var w = New(content, true);
-            w.Data.SetOutfitSlot(0, OutfitSlot.Head, "Beanie");
+            w.Data.SetOutfitSlot(0, OutfitSlot.Head, "Toque");
             w.Data.SetOutfitSlot(1, OutfitSlot.Neck, "BowTie");
             w.Goose.Place(new V(450, 360));
             w.Friend.Place(new V(300, 360));
@@ -465,9 +468,9 @@ namespace SecondHonk
                 // Small shapes sampled every other pixel: the cap interior
                 // is only a few dozen samples, but nothing else on a bare
                 // desktop is green.
-                int beanie = CountColor(scene, p => p.A > 100 && p.R >= 60 && p.R <= 90 && p.G >= 100 && p.G <= 122 && p.B >= 75 && p.B <= 100);
+                int toque = CountColor(scene, p => p.A > 100 && p.R >= 60 && p.R <= 90 && p.G >= 100 && p.G <= 122 && p.B >= 75 && p.B <= 100);
                 int bow = CountColor(scene, p => p.A > 100 && p.R >= 165 && p.R <= 190 && p.G >= 45 && p.G <= 72 && p.B >= 55 && p.B <= 78);
-                check(beanie > 15, "White's beanie renders in the shared scene");
+                check(toque > 15, "White's toque renders in the shared scene");
                 check(bow > 10, "Canada's bow tie renders in the shared scene");
             }
 
@@ -500,7 +503,7 @@ namespace SecondHonk
                 g.Clear(Color.Transparent);
                 var swimming = w.Goose;
                 swimming.Swimming = true;
-                Art.Goose(g, swimming, 1.5f, new Outfit { Head = "Beanie", Neck = "BowTie", Glasses = "Round" }, false, true);
+                Art.Goose(g, swimming, 1.5f, new Outfit { Head = "Toque", Neck = "BowTie", Glasses = "Round" }, false, true);
                 int wet = CountColor(bitmap, p => p.A > 100 && p.R >= 60 && p.R <= 90 && p.G >= 100 && p.G <= 122 && p.B >= 75 && p.B <= 100);
                 check(wet > 40, "Full outfits track the head while swimming in reduced motion");
                 swimming.Swimming = false;

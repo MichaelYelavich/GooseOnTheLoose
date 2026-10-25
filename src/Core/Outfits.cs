@@ -11,7 +11,7 @@ namespace SecondHonk
 
     // One goose's visible outfit. Every slot combines with the others; the
     // legacy shared choice (None, Scarf, Sunhat) maps onto head/neck with
-    // empty glasses. New values (Beanie, BowTie, Round) have no legacy
+    // empty glasses. New values (Toque, BowTie, Round) have no legacy
     // equivalent and are carried by the per-goose fields only.
     public sealed class Outfit
     {
@@ -30,13 +30,13 @@ namespace SecondHonk
 
     public static class OutfitCatalog
     {
-        public static readonly string[] Heads = { "None", "Sunhat", "Beanie" };
+        public static readonly string[] Heads = { "None", "Sunhat", "Toque" };
         public static readonly string[] Necks = { "None", "Scarf", "BowTie" };
         public static readonly string[] Glasses = { "None", "Round" };
 
         public static bool ValidHead(string value)
         {
-            return value == "None" || value == "Sunhat" || value == "Beanie";
+            return value == "None" || value == "Sunhat" || value == "Toque";
         }
 
         public static bool ValidNeck(string value)
@@ -70,7 +70,7 @@ namespace SecondHonk
 
         // Best-effort legacy alias for the old shared Hat preference.
         // Representable matching outfits round-trip exactly; anything newer
-        // (a beanie, a bow tie, round glasses, or geese dressed differently)
+        // (a toque, a bow tie, round glasses, or geese dressed differently)
         // falls back to White's closest legacy equivalent. Always returns one
         // of None, Scarf or Sunhat so old validation keeps working.
         public static string LegacyAlias(Outfit white, Outfit canada)

@@ -218,6 +218,19 @@ namespace SecondHonk
                 data.ApplyLegacyHat(hat);
         }
 
+        // Beta 2 saves name the head-slot value Beanie; the option is
+        // renamed to Toque. Rewrite before validating so Beta 2 outfits
+        // keep working instead of falling back to the backup.
+        public static void MigrateRenamedSlots(SaveData data)
+        {
+            if (data == null)
+                return;
+            if (data.WhiteHead == "Beanie")
+                data.WhiteHead = "Toque";
+            if (data.CanadaHead == "Beanie")
+                data.CanadaHead = "Toque";
+        }
+
         public void ValidateSlots()
         {
             if (!OutfitCatalog.ValidHead(WhiteHead) || !OutfitCatalog.ValidNeck(WhiteNeck) || !OutfitCatalog.ValidGlasses(WhiteGlasses) || !OutfitCatalog.ValidHead(CanadaHead) || !OutfitCatalog.ValidNeck(CanadaNeck) || !OutfitCatalog.ValidGlasses(CanadaGlasses))
@@ -275,6 +288,7 @@ namespace SecondHonk
                         // Legacy files name the shared Hat but no per-goose
                         // slots; migrate before validating the new fields.
                         SaveData.MigrateLegacyJson(s, json);
+                        SaveData.MigrateRenamedSlots(s);
                         s.ValidateSlots();
                         if (s.Mode != null && s.Mode != "Passive" && s.Mode != "Normal" && s.Mode != "Chaos")
                             throw new InvalidDataException("Unknown mode");
