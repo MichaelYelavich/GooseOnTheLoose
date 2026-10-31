@@ -18,7 +18,8 @@ namespace SecondHonk
         Deliver,
         Sleep,
         Follow,
-        Social
+        Social,
+        Goodbye
     }
 
     public enum DeliveryRecipient

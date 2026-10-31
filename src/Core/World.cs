@@ -26,6 +26,10 @@ namespace SecondHonk
         DesktopObject ball, stick;
         readonly Random random;
         int noteIndex, imageIndex;
+        // Card 12: graceful goodbye. While Goodbye is set the simulation
+        // holds the geese in their walk-off until both are done; the session
+        // watches GoodbyeDone and exits, saving settings and bond.
+        public bool Goodbye, GoodbyeDone;
         // Per-scene-kind sim-time of the last bond credit. Repeat pacing:
         // replaying the same kind inside the cooldown window earns the
         // reduced repeat credit instead of the full varied credit.
@@ -407,6 +411,11 @@ namespace SecondHonk
         {
             if (actor == null)
                 return;
+            // Card 12: goodbye holds. Ordinary activity never pulls an
+            // actor out of the walk-off; the sequence itself (or a finished
+            // delivery rejoining it) is the only way back to Goodbye.
+            if (Goodbye && actor.Task == Activity.Goodbye && task != Activity.Goodbye && task != Activity.Deliver)
+                return;
             // Card 11: wake-one-wakes-both. Leaving sleep stirs the
             // partner; the partner's own transition terminates there (it is
             // no longer asleep), so this cannot recurse.
@@ -569,6 +578,37 @@ namespace SecondHonk
                     actor.Held = null;
                 if (actor.Task == Activity.Ball || actor.Task == Activity.Fetch || actor.Task == Activity.Return || actor.Task == Activity.Eat)
                     CancelActor(actor);
+            }
+        }
+
+        // Card 12: graceful goodbye. Cancels active pranks and scenes with
+        // no restore (like a user grab): cursor, window work, invitations and
+        // the social scene drop at once, never restored or credited. An
+        // in-flight delivery finishes first and is never invalidated; the
+        // deliverer walks off once the pipeline releases. Then the geese
+        // collect on-screen Toy Box objects and walk off: a warm pair (bond
+        // at or above 0.5) leaves together, otherwise each goose walks to
+        // its nearest edge; solo white walks off alone. Bye bye never
+        // changes the bond. The session watches GoodbyeDone to exit.
+        public void BeginGoodbye()
+        {
+            if (Goodbye)
+                return;
+            Goodbye = true;
+            GoodbyeDone = false;
+            Wake();
+            Scenes.Cancel(this);
+            ReleaseCursorAll();
+            Broker.CancelAll();
+            Coordinator.ReleaseUnpossessed();
+            Coordinator.ReleaseWindow(Coordinator.WindowOwner);
+            foreach (var actor in Data.Companion ? new[] { Goose, Friend } : new[] { Goose })
+            {
+                if (actor.Task == Activity.Deliver)
+                    continue;
+                SetTaskActor(actor, Activity.Goodbye);
+                actor.TaskTime = 0;
+                actor.Wait = 0;
             }
         }
 
@@ -1256,6 +1296,11 @@ namespace SecondHonk
             if (Data.Companion || Friend.Task == Activity.Deliver)
                 StepActor(Friend, dt);
             Scenes.Update(this, dt);
+            // Card 12: the walk-off completes once every active goose has
+            // gone past an edge. A finished delivery rejoins Goodbye above,
+            // so the deliverer cannot strand this check on Wander.
+            if (Goodbye && !GoodbyeDone && PastEdge(Goose) && (!Data.Companion || PastEdge(Friend)))
+                GoodbyeDone = true;
         }
 
         void StepActor(Goose actor, float dt)
@@ -1467,7 +1512,11 @@ namespace SecondHonk
                         }
 
                         Coordinator.ReleaseDelivery(actor);
+                        // Card 12: a deliverer finishing mid-goodbye rejoins
+                        // the walk-off instead of resuming ordinary activity.
                         CancelActor(actor);
+                        if (Goodbye)
+                            SetTaskActor(actor, Activity.Goodbye);
                         if (actor == Friend && parkFriendAfterDelivery && !Data.Companion)
                         {
                             parkFriendAfterDelivery = false;
@@ -1498,9 +1547,74 @@ namespace SecondHonk
                     }
 
                     break;
+                case Activity.Goodbye:
+                    // Card 12: collect on-screen Toy Box objects on the way
+                    // out, then walk off. An in-flight deliverer runs its
+                    // ordinary Deliver case to completion and joins the
+                    // walk-off once the pipeline releases.
+                    StepGoodbye(actor, ref target, ref speed, ref offscreen);
+                    break;
             }
 
             Move(actor, target, speed, dt, offscreen);
+        }
+
+        // Card 12: collect on-screen Toy Box objects on the way out, then
+        // walk off. A warm pair (bond at or above 0.5) leaves together
+        // through the edge nearest their midpoint; otherwise each goose
+        // takes its own nearest edge; solo white walks off alone. Never
+        // touches the bond.
+        void StepGoodbye(Goose actor, ref V target, ref float speed, ref bool offscreen)
+        {
+            DesktopObject pickup = null;
+            float best = float.MaxValue;
+            foreach (var o in Objects)
+            {
+                if (o.Surface || o.Dragging || o.Carried || Coordinator.IsReservedByOther(o, actor))
+                    continue;
+                float d = V.Distance(actor.Pos, o.Pos);
+                if (d < best)
+                {
+                    best = d;
+                    pickup = o;
+                }
+            }
+
+            if (pickup != null)
+            {
+                Coordinator.TryReserve(pickup, actor);
+                actor.TargetObject = pickup;
+                target = pickup.Pos;
+                speed = 180;
+                if (V.Distance(actor.Pos, pickup.Pos) < 20 * Scale)
+                    RemoveObject(pickup);
+                return;
+            }
+
+            V from = Data.Companion && Data.Bond >= .5f ? (Goose.Pos + Friend.Pos) / 2 : actor.Pos;
+            target = EdgeExit(from);
+            speed = 200;
+            offscreen = true;
+        }
+
+        V EdgeExit(V p)
+        {
+            float over = 80 * Scale;
+            float left = p.X, right = Width - p.X, top = p.Y, bottom = Height - p.Y;
+            float nearest = Math.Min(Math.Min(left, right), Math.Min(top, bottom));
+            if (nearest == left)
+                return new V(-over, p.Y);
+            if (nearest == right)
+                return new V(Width + over, p.Y);
+            if (nearest == top)
+                return new V(p.X, -over);
+            return new V(p.X, Height + over);
+        }
+
+        bool PastEdge(Goose actor)
+        {
+            float m = 40 * Scale;
+            return actor.Pos.X < -m || actor.Pos.X > Width + m || actor.Pos.Y < -m || actor.Pos.Y > Height + m;
         }
     }
 }

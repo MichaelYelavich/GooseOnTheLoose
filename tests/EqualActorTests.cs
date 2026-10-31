@@ -216,6 +216,43 @@ namespace SecondHonk
             Advance(w, 1);
             w.Wake();
             check(w.Goose.Task == Activity.Wander && w.Friend.Task == Activity.Wander, "Explicit wake stirs both sleepers");
+
+            // Card 12: bye bye.
+            w = New(content, true);
+            w.Data.Bond = .8f;
+            w.Goose.Place(new V(400, 360));
+            w.Friend.Place(new V(800, 360));
+            w.SetTask(w.Goose, Activity.Chase);
+            w.StartScene(SceneKind.BallPass);
+            w.BeginGoodbye();
+            check(w.Goose.Task == Activity.Goodbye && w.Coordinator.CursorOwner == null && w.Scenes.Active == null, "Bye bye cancels pranks and scenes with no restore");
+            Advance(w, 60);
+            check(w.GoodbyeDone, "A warm pair collects objects and walks off together");
+            check(w.Data.Bond == .8f, "Bye bye does not change the bond");
+
+            w = New(content, true);
+            w.Data.Bond = .1f;
+            w.Goose.Place(new V(100, 360));
+            w.Friend.Place(new V(1100, 360));
+            w.BeginGoodbye();
+            Advance(w, 60);
+            check(w.GoodbyeDone, "A cool pair walks to separate edges");
+
+            w = New(content, false);
+            w.Goose.Place(new V(640, 360));
+            w.BeginGoodbye();
+            check(!w.GoodbyeDone, "Solo goodbye starts the walk-off without finishing instantly");
+            Advance(w, 60);
+            check(w.GoodbyeDone, "Solo white walks off alone");
+
+            w = New(content, true);
+            w.Goose.Place(new V(640, 360));
+            w.Friend.Place(new V(300, 360));
+            w.Deliver(w.Goose, false);
+            w.BeginGoodbye();
+            check(w.Goose.Task == Activity.Deliver, "An in-flight delivery is never invalidated by bye bye");
+            Advance(w, 60);
+            check(w.GoodbyeDone && w.Deliveries == 1, "The deliverer finishes first, then walks off");
         }
     }
 }

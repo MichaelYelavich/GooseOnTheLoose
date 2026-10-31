@@ -296,12 +296,23 @@ namespace SecondHonk
                 World.ClearProps();
             });
             Item(menu.Items, "Close goose windows", ClearNotes);
+            Item(menu.Items, "Bye bye", BeginGoodbye);
             Item(menu.Items, "Quit                            Ctrl+Alt+Q", ExitThread);
             menu.Opening += (s, e) =>
             {
                 World.ReleaseCursorAll();
                 tray.Text = World.Paused ? "Goose on the Loose — paused" : World.Data.Passive ? "Goose on the Loose — passive" : "Goose on the Loose";
             };
+        }
+
+        // Card 12: graceful goodbye from the tray: cancel pranks and
+        // scenes, let any in-flight delivery finish, then walk off and
+        // exit. Distinct from immediate Quit and from hold-Escape dismissal.
+        void BeginGoodbye()
+        {
+            if (exiting || World.Goodbye)
+                return;
+            World.BeginGoodbye();
         }
 
         void SetMode(string mode)
@@ -721,6 +732,13 @@ namespace SecondHonk
             if (windowAdapter != null)
                 windowAdapter.Poll();
             World.Update(dt);
+            // Card 12: the goodbye walk-off finished; exit through the
+            // ordinary quit path so settings and bond save exactly once.
+            if (World.GoodbyeDone && !exiting)
+            {
+                ExitThread();
+                return;
+            }
             if (World.HoldingCursor && !escape)
             {
                 V beak = World.Beak(World.GrabOwner ?? World.Goose);
