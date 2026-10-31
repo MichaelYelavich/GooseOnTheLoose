@@ -182,6 +182,40 @@ namespace SecondHonk
             check(soloHonker == w.Goose, "Solo sound events identify white");
             w.Chase(w.Goose.Pos + new V(100, 0));
             check(w.Goose.Task == Activity.Chase && w.Friend.Task == Activity.Wander, "Solo commands target white and leave no third actor running");
+
+            // Card 11: sleep.
+            w = New(content, false);
+            w.Goose.Place(new V(1150, 690));
+            w.Goose.NapIn = 0;
+            Advance(w, 1);
+            check(w.Goose.Task == Activity.Sleep, "White settles into sleep alone when Canada is disabled");
+            float soloBond = w.Data.Bond;
+            Advance(w, World.SleepSeconds + 5);
+            check(w.Goose.Task == Activity.Wander, "A solo nap wakes naturally");
+            check(w.Data.Bond == soloBond, "Sleep earns no bond");
+
+            w = New(content, true);
+            float close = 1 - .15f * w.Data.Bond;
+            w.Goose.Place(new V(400, 360));
+            w.Friend.Place(new V(800, 360));
+            w.Goose.NapIn = 0;
+            w.Friend.NapIn = 0;
+            Advance(w, 1);
+            check(w.Goose.Task == Activity.Sleep && w.Friend.Task == Activity.Sleep, "Pair naps settle both geese");
+            check(Math.Abs(V.Distance(w.Goose.Target, w.Friend.Target) - 84 * close) < 5, "Sleeping distance expresses the bond");
+            w.SetMode("Passive");
+            check(w.Goose.Task == Activity.Sleep && w.Friend.Task == Activity.Sleep, "Sleep runs in Passive");
+            w.SetMode("Normal");
+            w.Chase(w.Goose.Pos + new V(100, 0));
+            check(w.Goose.Task == Activity.Chase && w.Friend.Task == Activity.Wander, "Poking one goose wakes the pair");
+            w = New(content, true);
+            w.Goose.Place(new V(400, 360));
+            w.Friend.Place(new V(800, 360));
+            w.Goose.NapIn = 0;
+            w.Friend.NapIn = 0;
+            Advance(w, 1);
+            w.Wake();
+            check(w.Goose.Task == Activity.Wander && w.Friend.Task == Activity.Wander, "Explicit wake stirs both sleepers");
         }
     }
 }

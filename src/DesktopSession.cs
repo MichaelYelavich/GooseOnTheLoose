@@ -443,7 +443,9 @@ namespace SecondHonk
             try
             {
                 windowAdapter = new SystemWindowAdapter(area, IsOwnedWindow);
-                windowAdapter.UserIntervened += World.Broker.NotifyUserIntervention;
+                // User window activity cancels the broker's in-progress work
+                // and stirs sleeping geese (Card 11).
+                windowAdapter.UserIntervened += id => { World.Broker.NotifyUserIntervention(id); World.Wake(); };
                 World.Windows = windowAdapter;
             }
             catch (Exception error)
@@ -711,7 +713,7 @@ namespace SecondHonk
                     // press never provokes another grab. Never dismisses.
                     World.NotifyPrimaryClick();
                 }
-                else if (V.Distance(pointer, World.Goose.Pos - new V(0, 18 * World.Scale)) < 32 * World.Scale)
+                else if (V.Distance(pointer, World.Goose.Pos - new V(0, 18 * World.Scale)) < 32 * World.Scale || (World.Data.Companion && V.Distance(pointer, World.Friend.Pos - new V(0, 18 * World.Scale)) < 32 * World.Scale))
                     World.Chase(pointer);
             }
 

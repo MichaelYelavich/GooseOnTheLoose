@@ -40,6 +40,8 @@ namespace SecondHonk
         // brief re-grab cooldown. Either goose may own a grab, never both.
         public const float GrabMaxHold = 1.4f;
         public const float GrabRegrabCooldown = 3;
+        // Card 11: natural wake after this many settled (still) seconds.
+        public const float SleepSeconds = 25;
         public int Meals, Fetches, Kicks, Deliveries;
         public string DeliveryText = "", DeliveryImage = "";
         public event Action<Goose> Honked, FootLanded, DeliveryStarted, DeliveryCompleted;
@@ -405,6 +407,10 @@ namespace SecondHonk
         {
             if (actor == null)
                 return;
+            // Card 11: wake-one-wakes-both. Leaving sleep stirs the
+            // partner; the partner's own transition terminates there (it is
+            // no longer asleep), so this cannot recurse.
+            bool waking = actor.Task == Activity.Sleep && task != Activity.Sleep;
             if (task != Activity.Social && Scenes.IsParticipant(actor))
                 Scenes.Cancel(this);
             if (task != Activity.Fetch && task != Activity.Return && actor.Held != null)
@@ -420,6 +426,56 @@ namespace SecondHonk
             actor.Wait = 0;
             if (task == Activity.Deliver)
                 actor.DeliveryStage = 0;
+            if (waking)
+                WakePartner(actor);
+        }
+
+        // Card 11: the partner of a waking goose stirs too. Sleep never
+        // credits the bond; waking credits nothing either.
+        void WakePartner(Goose actor)
+        {
+            // Solo white sleeps alone: a disabled companion slot never
+            // stirs (and is never stirred).
+            if (!Data.Companion)
+                return;
+            Goose other = actor == Goose ? Friend : Goose;
+            if (other == null || other.Task != Activity.Sleep)
+                return;
+            SetTaskActor(other, Activity.Wander);
+        }
+
+        // Card 11: explicit wake (poke arrives through Chase and the other
+        // explicit actions above; window activity subscribes below). Waking
+        // one goose wakes the pair.
+        public void Wake()
+        {
+            foreach (var actor in new[] { Goose, Friend })
+                if (actor.Task == Activity.Sleep)
+                    SetTaskActor(actor, Activity.Wander);
+        }
+
+        // Card 11: settling into sleep. Solo white naps alone in the
+        // corner; a pair settles side by side, closer when the bond is warm
+        // (mirrors the Rest scene spacing). Sleep never credits the bond.
+        void SettleToSleep(Goose actor)
+        {
+            if (actor == null)
+                return;
+            V spot;
+            if (Data.Companion)
+            {
+                V mid = (Goose.Pos + Friend.Pos) / 2;
+                float closeness = 1 - .15f * Data.Bond;
+                spot = Clamp(mid + (actor == Friend ? new V(42 * Scale * closeness, -8 * Scale) : new V(-42 * Scale * closeness, 8 * Scale)));
+            }
+            else
+            {
+                spot = new V(Width - 70 * Scale, Height - 30 * Scale);
+            }
+
+            SetTaskActor(actor, Activity.Sleep);
+            actor.Target = spot;
+            actor.Auto = true;
         }
 
         public DesktopObject PlaceObject(ToyKind kind, V p)
@@ -566,6 +622,7 @@ namespace SecondHonk
 
         public void Honk()
         {
+            Wake();
             Honk(Goose);
         }
 
@@ -992,9 +1049,11 @@ namespace SecondHonk
             if (g.Velocity.Length > 6)
                 g.Direction = V.Turn(g.Direction, V.Angle(g.Velocity), dt * 3);
             float headTarget = g.Direction;
-            if (V.Distance(Pointer, g.Pos) < 140 * Scale && !HoldingCursor && g.Task != Activity.Deliver)
+            // Card 11: sleepers stay visually settled, heads down instead
+            // of tracking the cursor.
+            if (g.Task != Activity.Sleep && V.Distance(Pointer, g.Pos) < 140 * Scale && !HoldingCursor && g.Task != Activity.Deliver)
                 headTarget = V.Turn(g.Direction, V.Angle(Pointer - g.Pos), .65f);
-            g.Attention = V.Distance(Pointer, g.Pos) < 140 * Scale && g.Task != Activity.Deliver ? Pointer : target;
+            g.Attention = g.Task == Activity.Sleep ? target : V.Distance(Pointer, g.Pos) < 140 * Scale && g.Task != Activity.Deliver ? Pointer : target;
             g.HeadDirection = V.Turn(g.HeadDirection, headTarget, dt * 5);
             float neckTarget = g.Task == Activity.Chase || g.Task == Activity.Fetch || g.Task == Activity.Return ? 1 : 0;
             g.Neck += (neckTarget - g.Neck) * Math.Min(1, dt * 6);
@@ -1232,8 +1291,7 @@ namespace SecondHonk
                     if (actor.NapIn <= 0)
                     {
                         actor.NapIn = 180 + random.Next(180);
-                        SetTaskActor(actor, Activity.Sleep);
-                        actor.Target = new V(Width - 70 * Scale, Height - 30 * Scale);
+                        SettleToSleep(actor);
                     }
 
                     if (actor == Friend && actor.Task == Activity.Wander)
@@ -1423,10 +1481,22 @@ namespace SecondHonk
 
                     break;
                 case Activity.Sleep:
+                    // Card 11: settle, then sleep. Travel never eats into
+                    // rest: the wake timer starts once the spot is reached,
+                    // and natural expiry wakes the pair through SetTaskActor.
                     target = actor.Target;
                     speed = 55;
-                    if (actor.TaskTime > 25)
-                        CancelActor(actor);
+                    if (V.Distance(actor.Pos, actor.Target) < 10 * Scale)
+                    {
+                        target = actor.Pos;
+                        speed = 0;
+                        if (actor.Wait <= 0)
+                            actor.Wait = SleepSeconds;
+                        actor.Wait -= dt;
+                        if (actor.Wait <= 0)
+                            SetTaskActor(actor, Activity.Wander);
+                    }
+
                     break;
             }
 
