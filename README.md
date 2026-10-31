@@ -6,13 +6,13 @@
 
 A spiritual successor to Desktop Goose, made for Windows 11.
 
-[![Windows 11](https://img.shields.io/badge/Windows-11-436c83)](docs/PLAYING.md#install-and-play) [![Beta Release 2](https://img.shields.io/badge/release-Beta_Release_2-6b8055)](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.5.0-beta.1) [![Windows validation](https://github.com/MichaelYelavich/GooseOnTheLoose/actions/workflows/ci.yml/badge.svg)](https://github.com/MichaelYelavich/GooseOnTheLoose/actions/workflows/ci.yml)
+[![Windows 11](https://img.shields.io/badge/Windows-11-436c83)](docs/PLAYING.md#install-and-play) [![Beta Release 3](https://img.shields.io/badge/release-Beta_Release_3-6b8055)](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.6.0-beta.1) [![Windows validation](https://github.com/MichaelYelavich/GooseOnTheLoose/actions/workflows/ci.yml/badge.svg)](https://github.com/MichaelYelavich/GooseOnTheLoose/actions/workflows/ci.yml)
 
 ![A white goose and a Canada goose with a ball, fetch stick, peas, pond and rubber duck.](docs/assets/desktop-geese.png)
 
 *An illustration made with the game's own renderer. The geese live on your desktop.*
 
-[**Download Beta Release 2**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.5.0-beta.1) · [Player guide](docs/PLAYING.md) · [Roadmap](#roadmap) · [Report a bug](https://github.com/MichaelYelavich/GooseOnTheLoose/issues/new/choose)
+[**Download Beta Release 3**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.6.0-beta.1) · [Player guide](docs/PLAYING.md) · [Roadmap](#roadmap) · [Report a bug](https://github.com/MichaelYelavich/GooseOnTheLoose/issues/new/choose)
 
 </div>
 
@@ -40,8 +40,8 @@ Preferences and custom content persist. Toys, water, footprints and delivered wi
 
 | Download | What to do |
 | --- | --- |
-| [**Windows installer**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/download/v0.5.0-beta.1/GooseOnTheLoose-Beta2-Setup.exe) | Double-click to install for your Windows account. No administrator access needed. |
-| [**Portable ZIP**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/download/v0.5.0-beta.1/GooseOnTheLoose-Beta2-windows.zip) | Extract the entire folder, then run **GooseOnTheLoose.exe**. Keep its companion files beside it. |
+| [**Windows installer**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/download/v0.6.0-beta.1/GooseOnTheLoose-Beta3-Setup.exe) | Double-click to install for your Windows account. No administrator access needed. |
+| [**Portable ZIP**](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/download/v0.6.0-beta.1/GooseOnTheLoose-Beta3-windows.zip) | Extract the entire folder, then run **GooseOnTheLoose.exe**. Keep its companion files beside it. |
 
 Requires **Windows 11**. Its included .NET Framework is sufficient; players don't need developer tools or an extra runtime download. Desktop and startup shortcuts are optional and off by default.
 

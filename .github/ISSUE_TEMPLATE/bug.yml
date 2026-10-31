@@ -13,7 +13,7 @@ body:
     id: version
     attributes:
       label: Game version and installation type
-      placeholder: Beta Release 2, installer or portable
+      placeholder: Beta Release 3, installer or portable
     validations:
       required: true
   - type: textarea

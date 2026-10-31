@@ -2,17 +2,17 @@
 
 An independent spiritual successor to [Desktop Goose by Samperson](https://samperson.itch.io/desktop-goose), with geese that live directly on your Windows 11 desktop.
 
-[← Back to the README](../README.md) · [Get Beta Release 2](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.5.0-beta.1)
+[← Back to the README](../README.md) · [Get Beta Release 3](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.6.0-beta.1)
 
 ## Install and play
 
-**Installer:** double-click **GooseOnTheLoose-Beta2-Setup.exe**. It installs for your Windows account and creates a Start menu shortcut. Administrator access is not required. Desktop and Windows-startup shortcuts are optional and start unchecked.
+**Installer:** double-click **GooseOnTheLoose-Beta3-Setup.exe**. It installs for your Windows account and creates a Start menu shortcut. Administrator access is not required. Desktop and Windows-startup shortcuts are optional and start unchecked.
 
 Fresh installations use `%LOCALAPPDATA%\Programs\GooseOnTheLoose`. Upgrades retain the existing installation directory, preferences and custom content. Uninstall removes the application and shortcuts while keeping your Documents content.
 
 **Portable:** extract the entire Windows ZIP and run **GooseOnTheLoose.exe**. Keep all extracted files and folders together, including **Goose.Core.dll**, the executable's configuration file, **Assets** and **Packs**.
 
-Windows 11's included .NET Framework is sufficient. No account, network connection or extra runtime download is required. The installer is unsigned; download it from the project's [GitHub release page](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.5.0-beta.1).
+Windows 11's included .NET Framework is sufficient. No account, network connection or extra runtime download is required. The installer is unsigned; download it from the project's [GitHub release page](https://github.com/MichaelYelavich/GooseOnTheLoose/releases/tag/v0.6.0-beta.1).
 
 ## The tray menu
 
@@ -26,7 +26,9 @@ Right-click the goose tray icon to open the controls. There is no required contr
 | **Mode** | **Passive**, **Normal** or **Chaos**. Passive keeps peaceful play, swimming and social scenes while stopping automatic pranks, unsolicited deliveries and cursor or window interference; sound stays off and explicit requests still work. Normal is the default mischief: deliveries, honks, and following or poking at the cursor without capturing it, plus small nudges to the active window. Chaos adds brief cursor captures (at most 1.4 seconds, released with a click) and drags of inactive windows, with more frequent pranks. Leaving Passive restores the previous mode. |
 | **Options** | Changes the companion, outfits, size, selected display, reduced motion, sound and cursor preferences. |
 | **Your content** | Imports pictures, edits notes, opens the content folder, reloads content or copies diagnostics. |
-| **Cleanup / Quit** | Clears objects, closes delivered windows or exits completely. |
+| **Cleanup / Quit** | Clears objects, closes delivered windows, says bye bye, or exits completely. |
+
+The geese also settle down and **sleep** on their own: eyes closed, heads down, with a rising Zzz. White naps alone when Canada is disabled; the pair settles side by side when both geese are out, closer when the bond is warm. Sleeping never changes the bond, and sleep happens in every mode, Passive included. Poking a goose, using a window, an explicit command, or time itself wakes them — waking one goose wakes the pair.
 
 The optional companion is a Canada goose. Both geese dress through the wardrobe: head (**None**, **Sunhat**, **Toque**), neck (**None**, **Scarf**, **Bow tie**) and glasses (**None**, **Round**), in any combination. Outfits stay linked by default, so a change dresses both geese; dressing one goose separately keeps that slot individual. Open the **Wardrobe** from Options for previews of both geese and for linking or unlinking, or use the quick Outfits controls for linked changes. The companion remains a little smaller.
 
@@ -77,6 +79,7 @@ Geese can drag small native note and picture windows onto the desktop. Closing o
 - **Tap Escape:** call off a chase and release the cursor.
 - **Click (Chaos):** a primary mouse-button press releases a grabbed cursor at once.
 - **Hold Escape for five seconds:** a countdown appears, then every active goose bursts into cartoon feathers and smoke with a soft pop when sound is enabled. Release early to cancel. Reduced motion uses a short fade.
+- **Tray Bye bye:** the graceful goodbye. Pranks and scenes stop, an in-flight delivery finishes first, the geese collect on-screen toys and walk off together (or to separate edges), and the app exits saving settings and bond.
 - **Tray Quit or Ctrl+Alt+Q:** exit immediately.
 
 After the five-second countdown, everything disappears within one second: geese, delivered windows, toys, water, footprints, overlays and tray icon. Installer shutdown and Windows shutdown also clean up immediately. Preferences and your custom files remain.

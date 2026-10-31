@@ -1,6 +1,12 @@
-# Goose on the Loose — Beta Release 2
+# Goose on the Loose — Beta Release 3
 
-**0.5.0-beta.1**, the second public beta and the next iteration after Desktop Goose 2 0.3.1. Windows 11, .NET Framework 4.8. This is a prerelease.
+**0.6.0-beta.1**, the third public beta and the next iteration after Desktop Goose 2 0.3.1. Windows 11, .NET Framework 4.8. This is a prerelease.
+
+## What's new
+
+- **Sleep.** The geese settle down and sleep, with closed eyes: White naps alone when Canada is disabled, and the pair settles side by side when both geese are out. Sleeping never changes the bond. They wake when poked, when you use a window, on an explicit wake, or on their own — waking one goose wakes the pair. Sleep runs in every mode, Passive included.
+- **Bye bye.** A new tray item walks the geese off gracefully, distinct from immediate Quit and from hold-Escape dismissal: pranks and scenes stop with no restore, an in-flight delivery finishes first, the geese collect on-screen toys and walk off — together when warm, to separate edges when cool — and the app exits saving settings and bond.
+- **Dev mode.** Launch with `--dev` or pick **dev** from the tray for performance, bond and state overlays while playing.
 
 ## What's new
 
@@ -27,7 +33,7 @@
 
 ## Install or upgrade
 
-Download **GooseOnTheLoose-Beta2-Setup.exe**, or extract the entire **GooseOnTheLoose-Beta2-windows.zip** and run **GooseOnTheLoose.exe**. The source ZIP includes everything needed to build with the pinned SDK.
+Download **GooseOnTheLoose-Beta3-Setup.exe**, or extract the entire **GooseOnTheLoose-Beta3-windows.zip** and run **GooseOnTheLoose.exe**. The source ZIP includes everything needed to build with the pinned SDK.
 
 The installer is per-user and retains the previous installation folder on upgrade. Existing Documents/DesktopGoose2 content stays in place; fresh profiles use Documents/GooseOnTheLoose. Settings and content formats remain compatible. Upgrade-only compatibility executables keep old shortcuts working. Startup and desktop shortcuts remain optional and off by default. Uninstall retains custom content.
 

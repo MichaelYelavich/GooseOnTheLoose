@@ -6,9 +6,9 @@ Goose on the Loose is an independent spiritual successor to Desktop Goose. The a
 
 These are priorities, not a dated release schedule. Beta feedback will shape the order within each stage. Planned items below are not claims about features already available.
 
-## Here now · Beta Release 2
+## Here now · Beta Release 3
 
-Two desktop geese, shared outfits, seven kinds of toys and water, wet and muddy footprints, picture and note delivery, native tray tools and editable content. The game works on one selected display at a time.
+Two desktop geese with shared scenes and an invisible bond, wardrobe outfits, three modes, window manners with Chaos cursor grabs, sleep with natural and provoked waking, a graceful bye-bye walk-off, a dev-mode overlay, seven kinds of toys and water, wet and muddy footprints, picture and note delivery, native tray tools and editable content. The game works on one selected display at a time.
 
 The current foundation includes reproducible builds, automated Windows checks, bounded image preparation, rotating local logs and opt-in diagnostics. See [release notes](../RELEASE_NOTES.md) and [validation](../VALIDATION.md) for the shipped changes and evidence.
 
