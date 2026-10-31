@@ -1,8 +1,8 @@
-# Beta Release 2 — validation
+# Beta Release 3 — validation
 
-Release: Goose on the Loose 0.5.0-beta.1. Test host: Windows 11 build 26300, x64, .NET Framework 4.8. Developer SDK: 10.0.402; Inno Setup: 6.7.3. The application and test runner report the real Windows version through their manifest.
+Release: Goose on the Loose 0.6.0-beta.1. Test host: Windows 11 build 26300, x64, .NET Framework 4.8. Developer SDK: 10.0.402; Inno Setup: 6.7.3. The application and test runner report the real Windows version through their manifest.
 
-Beta 1 evidence below (142 application checks, 17 native checks, installer and package checks against 0.3.1) is retained as the baseline: the Beta 2 change set carries Cards 1–4 behavior work on the same build and packaging pipeline. Beta 2 packaging verification follows in its own section at the end.
+Beta 2 evidence below (443 application checks at last local run, 17 native checks, installer and package checks against 0.3.1) is retained as the baseline: the Beta 3 change set carries Cards 9–12 behavior work (toque rename, dev overlay, sleep, bye bye) on the same build and packaging pipeline. Beta 3 packaging verification follows in its own section at the end.
 
 ## Regressions and native checks
 
@@ -53,3 +53,15 @@ Both ZIPs contain no `private/`, `.work/`, `artifacts/`, `bin/`, `obj/` or `.git
 Upgrade: the Beta 2 installer installed in place over a genuine Beta 1 install (same per-user directory, same uninstall registration, DisplayVersion updated to 0.5.0-beta.1). Seeded settings, a sentinel custom note and a custom picture hash were unchanged by the upgrade, and `--seed-content` rewrote nothing existing. A second Beta 2 upgrade over a live running instance shut the instance down via the IPC `--quit` handshake (no surviving process, files replaced cleanly, `--seed-content` exit 0); holding the binary open makes setup abort before any replacement with "Please quit Goose on the Loose from its tray menu, then try again" (exit 7), leaving the install untouched.
 
 Not re-run in this card: hosted CI gates, the 30-minute soak, and the full test-identity installer suite (`tools/verify-installer.ps1`) — unchanged installer script, re-verified at release time per the checklist.
+
+## Beta 3 packaging verification (R3, local, 2026-10-31)
+
+Version bump only (0.5.0-beta.1 → 0.6.0-beta.1, `Version.props` plus player-facing strings; installer AppId, IPC identity and data-directory behavior unchanged). Build: locked restore, Release build, asset generation, format check clean, **443 application checks pass** on this host. Packages rebuilt with Inno Setup 6.7.3 into `.work/release/`:
+
+- `GooseOnTheLoose-Beta3-Setup.exe` — 2,253,142 bytes, SHA-256 `A65F4D8364E1A481399AB5E0BD112831BB92B4A5BDF57154151568FBAD009591`
+- `GooseOnTheLoose-Beta3-windows.zip` — 268,894 bytes, SHA-256 `B0E8E357F6B176091653952676B81A2DCC411CC18A2BCB56563E9FC614971DF5`
+- `GooseOnTheLoose-Beta3-source.zip` — 338,719 bytes, SHA-256 `1D457E03119051908E2BBD65F8F8FDFD13A1A0A6AAF6F5598B095E0F5E2765FA`
+
+Both ZIPs contain no `private/`, `.work/`, `artifacts/`, `bin/`, `obj/` or `.git/` entries and no test runtime in the portable game; the source archive holds exactly the 103 tracked files at the release commit. The portable executables are byte-identical to the fresh `src/bin/Release` build outputs.
+
+Not re-run in this release: the interactive native modal-dialog gate, hosted CI gates, the 30-minute soak, and the full 0.3.1 upgrade/install matrix — unchanged installer script and IPC identity; release-time download hash verification stands in for the install matrix per the R3 goal.
